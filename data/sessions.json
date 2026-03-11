@@ -1,0 +1,242 @@
+[
+  {
+    "timestamp": "2026-03-05T20:58:15.849Z",
+    "input": {
+      "gameType": "sports_bet",
+      "betSize": 51,
+      "frequencyPerWeek": 17,
+      "riskTolerance": "low"
+    },
+    "output": {
+      "advice": "Given your low self-reported risk tolerance,",
+      "riskScore": 90,
+      "winChanceEstimate": 25,
+      "lossChanceEstimate": 75,
+      "expectedWeeklySpend": 867
+    }
+  },
+  {
+    "timestamp": "2026-03-05T20:59:04.668Z",
+    "input": {
+      "gameType": "lottery",
+      "betSize": 5,
+      "frequencyPerWeek": 1,
+      "riskTolerance": "medium"
+    },
+    "output": {
+      "advice": "Your current lottery play of $5 once a week",
+      "riskScore": 30,
+      "winChanceEstimate": 5,
+      "lossChanceEstimate": 95,
+      "expectedWeeklySpend": 5
+    }
+  },
+  {
+    "timestamp": "2026-03-05T21:05:52.176Z",
+    "input": {
+      "gameType": "lottery",
+      "betSize": 5,
+      "frequencyPerWeek": 1,
+      "riskTolerance": "medium"
+    },
+    "output": {
+      "advice": "Your current lottery play of 5 units once a",
+      "riskScore": 30,
+      "winChanceEstimate": 5,
+      "lossChanceEstimate": 95,
+      "expectedWeeklySpend": 5
+    }
+  },
+  {
+    "timestamp": "2026-03-05T21:06:17.175Z",
+    "input": {
+      "gameType": "lottery",
+      "betSize": 5,
+      "frequencyPerWeek": 1,
+      "riskTolerance": "medium"
+    },
+    "output": {
+      "advice": "Your current lottery play of 5 units once a week",
+      "riskScore": 30,
+      "winChanceEstimate": 5,
+      "lossChanceEstimate": 95,
+      "expectedWeeklySpend": 5
+    }
+  },
+  {
+    "timestamp": "2026-03-05T21:10:58.107Z",
+    "input": {
+      "gameType": "slots",
+      "betSize": 100,
+      "frequencyPerWeek": 10,
+      "riskTolerance": "medium"
+    },
+    "output": {
+      "advice": "With an average bet of 100 units and",
+      "riskScore": 90,
+      "winChanceEstimate": 15,
+      "lossChanceEstimate": 85,
+      "expectedWeeklySpend": 1000
+    }
+  },
+  {
+    "timestamp": "2026-03-05T21:13:22.858Z",
+    "input": {
+      "gameType": "lottery",
+      "betSize": 5,
+      "frequencyPerWeek": 1,
+      "riskTolerance": "medium"
+    },
+    "output": {
+      "advice": "Your weekly spend of 5 on the lottery is a",
+      "riskScore": 30,
+      "winChanceEstimate": 5,
+      "lossChanceEstimate": 95,
+      "expectedWeeklySpend": 5
+    }
+  },
+  {
+    "timestamp": "2026-03-05T21:14:21.334Z",
+    "input": {
+      "gameType": "lottery",
+      "betSize": 5,
+      "frequencyPerWeek": 1,
+      "riskTolerance": "medium"
+    },
+    "output": {
+      "advice": "Your lottery play of 5 units once",
+      "riskScore": 30,
+      "winChanceEstimate": 5,
+      "lossChanceEstimate": 95,
+      "expectedWeeklySpend": 5
+    }
+  },
+  {
+    "timestamp": "2026-03-05T21:15:49.497Z",
+    "input": {
+      "gameType": "lottery",
+      "betSize": 5,
+      "frequencyPerWeek": 1,
+      "riskTolerance": "medium"
+    },
+    "output": {
+      "advice": "Your current lottery play of 5 units once a",
+      "riskScore": 30,
+      "winChanceEstimate": 5,
+      "lossChanceEstimate": 95,
+      "expectedWeeklySpend": 5
+    }
+  },
+  {
+    "timestamp": "2026-03-05T21:27:14.703Z",
+    "input": {
+      "gameType": "lottery",
+      "betSize": 5,
+      "frequencyPerWeek": 1,
+      "riskTolerance": "medium"
+    },
+    "output": {
+      "advice": "Your lottery play seems infrequent and with a moderate bet size, which is a good starting point for responsible gambling. Remember that lotteries are games of chance with very low odds, so it's best to view any spending as entertainment rather than an investment. Continue to stick to your budget and avoid increasing your bet size or frequency, especially if you notice any urge to chase losses.",
+      "riskScore": 30,
+      "winChanceEstimate": 5,
+      "lossChanceEstimate": 95,
+      "expectedWeeklySpend": 5
+    }
+  },
+  {
+    "timestamp": "2026-03-05T21:28:50.345Z",
+    "input": {
+      "gameType": "slots",
+      "betSize": 5,
+      "frequencyPerWeek": 1,
+      "riskTolerance": "medium"
+    },
+    "output": {
+      "advice": "Your gambling habits appear to be moderate given your stated risk tolerance and frequency of play. Continue to set clear budget limits for your weekly entertainment and be mindful of how your bet size aligns with your overall financial situation. Remember that slots are games of chance, and it's important to gamble responsibly and only with funds you can afford to lose.",
+      "riskScore": 70,
+      "winChanceEstimate": 15,
+      "lossChanceEstimate": 85,
+      "expectedWeeklySpend": 5
+    }
+  },
+  {
+    "timestamp": "2026-03-06T18:52:36.438Z",
+    "input": {
+      "gameType": "slots",
+      "betSize": 10,
+      "frequencyPerWeek": 7,
+      "riskTolerance": "high"
+    },
+    "output": {
+      "advice": "While your high risk tolerance and frequent play on slots might be enjoyable, remember that slots are games of chance with a house edge, meaning losses are statistically likely over time. It's important to set a strict budget for your gambling and stick to it, ensuring you only play with money you can afford to lose.",
+      "riskScore": 70,
+      "winChanceEstimate": 15,
+      "lossChanceEstimate": 85,
+      "expectedWeeklySpend": 70
+    }
+  },
+  {
+    "timestamp": "2026-03-07T11:29:15.461Z",
+    "input": {
+      "gameType": "sports_bet",
+      "betSize": 50,
+      "frequencyPerWeek": 4,
+      "riskTolerance": "medium"
+    },
+    "output": {
+      "advice": "Your moderate bet size and play frequency suggest a balanced approach to sports betting, aligning with your medium risk tolerance. Remember to set clear limits for yourself each week and only gamble with funds you can afford to lose to maintain responsible play.",
+      "riskScore": 75,
+      "winChanceEstimate": 25,
+      "lossChanceEstimate": 75,
+      "expectedWeeklySpend": 200
+    }
+  },
+  {
+    "timestamp": "2026-03-11T16:26:59.341Z",
+    "input": {
+      "gameType": "sports_bet",
+      "betSize": 50,
+      "frequencyPerWeek": 2,
+      "riskTolerance": "high"
+    },
+    "output": {
+      "advice": "While your high risk tolerance and consistent play in sports betting might seem manageable now, it's important to remember that gambling, even with a high tolerance, carries inherent financial risks. Always set a strict budget for your weekly bets and stick to it, ensuring you never bet more than you can comfortably afford to lose.",
+      "riskScore": 65,
+      "winChanceEstimate": 25,
+      "lossChanceEstimate": 75,
+      "expectedWeeklySpend": 100
+    }
+  },
+  {
+    "timestamp": "2026-03-11T16:27:05.003Z",
+    "input": {
+      "gameType": "sports_bet",
+      "betSize": 50,
+      "frequencyPerWeek": 2,
+      "riskTolerance": "high"
+    },
+    "output": {
+      "advice": "Given your high risk tolerance and consistent betting frequency, it's important to be mindful of your spending. Ensure your gambling remains a form of entertainment by setting clear limits on both time and money, and never bet more than you can afford to lose.",
+      "riskScore": 65,
+      "winChanceEstimate": 25,
+      "lossChanceEstimate": 75,
+      "expectedWeeklySpend": 100
+    }
+  },
+  {
+    "timestamp": "2026-03-11T16:30:36.350Z",
+    "input": {
+      "gameType": "sports_bet",
+      "betSize": 10,
+      "frequencyPerWeek": 3,
+      "riskTolerance": "low"
+    },
+    "output": {
+      "advice": "Your current gambling behavior with sports bets seems relatively consistent with a low risk tolerance, given your average bet size and weekly plays. It's great that you're mindful of your risk tolerance, and continuing to bet within your means is a responsible approach. Remember to always gamble responsibly and never bet more than you can afford to lose.",
+      "riskScore": 75,
+      "winChanceEstimate": 25,
+      "lossChanceEstimate": 75,
+      "expectedWeeklySpend": 30
+    }
+  }
+]
