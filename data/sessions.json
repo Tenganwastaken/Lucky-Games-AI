@@ -238,5 +238,69 @@
       "lossChanceEstimate": 75,
       "expectedWeeklySpend": 30
     }
+  },
+  {
+    "timestamp": "2026-03-31T21:40:23.584Z",
+    "input": {
+      "gameType": "lottery",
+      "betSize": 5,
+      "frequencyPerWeek": 1,
+      "riskTolerance": "medium"
+    },
+    "output": {
+      "advice": "For a medium risk tolerance and one lottery play per week with an average bet of 5, your current behavior is generally within reasonable limits. Continue to monitor your spending and ensure this hobby doesn't negatively impact your finances or other responsibilities. Remember that lotteries are games of chance with very low odds of winning, so view it as entertainment rather than an investment.",
+      "riskScore": 30,
+      "winChanceEstimate": 5,
+      "lossChanceEstimate": 95,
+      "expectedWeeklySpend": 5
+    }
+  },
+  {
+    "timestamp": "2026-03-31T21:44:32.905Z",
+    "input": {
+      "gameType": "lottery",
+      "betSize": 5,
+      "frequencyPerWeek": 1,
+      "riskTolerance": "medium"
+    },
+    "output": {
+      "advice": "Your lottery play is infrequent with a moderate bet size, which aligns with a medium risk tolerance. It's important to remember that lotteries are games of chance with low odds of winning, so it's best to view any spending as entertainment rather than an investment. Ensure your gambling remains within your budget and doesn't negatively impact your finances or well-being.",
+      "riskScore": 30,
+      "winChanceEstimate": 5,
+      "lossChanceEstimate": 95,
+      "expectedWeeklySpend": 5
+    }
+  },
+  {
+    "timestamp": "2026-03-31T21:50:32.677Z",
+    "input": {
+      "gameType": "slots",
+      "betSize": 5,
+      "frequencyPerWeek": 1,
+      "riskTolerance": "medium"
+    },
+    "output": {
+      "advice": "Your current slot play with an average bet of 5 units, once a week, and a medium risk tolerance seems to be within a manageable range. However, it's always wise to remember that slots are games of chance, and consistent losses can occur, so set a budget and stick to it to ensure your gambling remains a fun and not a financial burden. If your betting patterns or financial situation change, it's a good idea to re-evaluate your approach and potentially seek support if needed.",
+      "riskScore": 70,
+      "winChanceEstimate": 15,
+      "lossChanceEstimate": 85,
+      "expectedWeeklySpend": 5
+    }
+  },
+  {
+    "timestamp": "2026-03-31T21:55:56.023Z",
+    "input": {
+      "gameType": "lottery",
+      "betSize": 5,
+      "frequencyPerWeek": 1,
+      "riskTolerance": "medium"
+    },
+    "output": {
+      "advice": "While your lottery play is infrequent and your bet size is modest, it's important to remember that lotteries are games of chance with very low odds of winning. Ensure your gambling remains within your means and doesn't impact your financial well-being, as even small amounts can add up over time. If you ever feel your gambling is becoming a problem, consider seeking support.",
+      "riskScore": 30,
+      "winChanceEstimate": 5,
+      "lossChanceEstimate": 95,
+      "expectedWeeklySpend": 5
+    }
   }
 ]

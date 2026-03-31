@@ -1,8 +1,15 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import fs from 'fs/promises';
 import path from 'path';
+import { prisma } from '@/lib/prisma';
+import { SESSION_COOKIE, getSessionUserByToken } from '@/lib/auth-session';
+import { getClientIpFromRequest, lookupCountryFromIp } from '@/lib/geo-ip';
 
 export const runtime = 'nodejs';
+
+const GAME_TYPES = new Set(['lottery', 'slots', 'sports_bet', 'other']);
+const RISK = new Set(['low', 'medium', 'high']);
 
 const GEMINI_API_URL =
   'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent';
@@ -42,13 +49,25 @@ export async function POST(req) {
     const body = await req.json();
     const { gameType, betSize, frequencyPerWeek, riskTolerance } = body;
 
+    if (!GAME_TYPES.has(gameType)) {
+      return NextResponse.json({ error: 'Invalid gameType' }, { status: 400 });
+    }
+    if (!RISK.has(riskTolerance)) {
+      return NextResponse.json({ error: 'Invalid riskTolerance' }, { status: 400 });
+    }
+    const betN = Number(betSize);
+    const freqN = Number(frequencyPerWeek);
+    if (!Number.isFinite(betN) || betN < 1 || !Number.isFinite(freqN) || freqN < 1) {
+      return NextResponse.json({ error: 'Invalid bet size or frequency' }, { status: 400 });
+    }
+
     const prompt = `
 You are analyzing a user's gambling / lucky game behavior.
 
 User data:
 - Game type: ${gameType}
-- Average bet size (in currency units): ${betSize}
-- Plays per week: ${frequencyPerWeek}
+- Average bet size (in currency units): ${betN}
+- Plays per week: ${freqN}
 - Self-reported risk tolerance: ${riskTolerance}
 
 In 2-3 sentences, give clear, responsible advice about their gambling behavior.
@@ -106,16 +125,16 @@ Return only plain text sentences, no JSON, no bullet points, no code fences.
     }
 
     // More plays per week increases risk
-    if (frequencyPerWeek >= 5) {
+    if (freqN >= 5) {
       riskScore += 10;
-    } else if (frequencyPerWeek >= 2) {
+    } else if (freqN >= 2) {
       riskScore += 5;
     }
 
     // Bigger bet size also increases risk a bit
-    if (betSize >= 50) {
+    if (betN >= 50) {
       riskScore += 10;
-    } else if (betSize >= 20) {
+    } else if (betN >= 20) {
       riskScore += 5;
     }
 
@@ -138,7 +157,7 @@ Return only plain text sentences, no JSON, no bullet points, no code fences.
     }
 
     const lossChanceEstimate = 100 - winChanceEstimate;
-    const expectedWeeklySpend = betSize * frequencyPerWeek;
+    const expectedWeeklySpend = betN * freqN;
 
     const responsePayload = {
       advice: adviceText || 'No advice generated.',
@@ -152,9 +171,47 @@ Return only plain text sentences, no JSON, no bullet points, no code fences.
     const timestamp = new Date().toISOString();
     appendSession({
       timestamp,
-      input: { gameType, betSize, frequencyPerWeek, riskTolerance },
+      input: { gameType, betSize: betN, frequencyPerWeek: freqN, riskTolerance },
       output: responsePayload,
     });
+
+    // Map aggregates: one row per successful advisor run (logged-in or guest)
+    try {
+      const cookieStore = await cookies();
+      const token = cookieStore.get(SESSION_COOKIE)?.value;
+      const sessionData = token ? await getSessionUserByToken(token) : null;
+
+      let userId = null;
+      let countryCode = null;
+      if (sessionData?.user) {
+        userId = sessionData.user.id;
+        countryCode = sessionData.user.countryCode ?? null;
+      }
+      if (!countryCode) {
+        const geo = await lookupCountryFromIp(getClientIpFromRequest(req));
+        countryCode = geo?.countryCode ?? null;
+      }
+
+      if (process.env.NODE_ENV === 'development') {
+        const dbg = body.debugCountryCode;
+        if (typeof dbg === 'string' && /^[a-zA-Z]{2}$/.test(dbg.trim())) {
+          countryCode = dbg.trim().toUpperCase();
+        }
+      }
+
+      await prisma.advisorUsage.create({
+        data: {
+          userId,
+          countryCode,
+          gameType,
+          betSize: Math.round(betN),
+          frequencyPerWeek: Math.round(freqN),
+          riskTolerance,
+        },
+      });
+    } catch (persistErr) {
+      console.error('AdvisorUsage persist failed:', persistErr);
+    }
 
     return NextResponse.json(responsePayload);
   } catch (err) {

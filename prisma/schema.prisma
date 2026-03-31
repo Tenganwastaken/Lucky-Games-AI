@@ -1,0 +1,53 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id             String          @id @default(cuid())
+  email          String          @unique
+  passwordHash   String
+  dateOfBirth    DateTime
+  countryCode    String? // ISO 3166-1 alpha-2 from signup/login IP (approximate)
+  createdAt      DateTime        @default(now())
+  sessions       Session[]
+  advisorUsages  AdvisorUsage[]
+
+  @@index([countryCode])
+}
+
+model AdvisorUsage {
+  id               String   @id @default(cuid())
+  userId           String?
+  user             User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  countryCode      String? // snapshot: user profile or request IP geo at analysis time
+  gameType         String
+  betSize          Int
+  frequencyPerWeek Int
+  riskTolerance    String
+  createdAt        DateTime @default(now())
+
+  @@index([countryCode])
+  @@index([gameType])
+  @@index([countryCode, gameType])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}

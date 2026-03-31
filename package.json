@@ -3,22 +3,34 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "postinstall": "prisma generate",
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:repair": "node scripts/repair-db.mjs"
   },
   "dependencies": {
+    "@prisma/adapter-better-sqlite3": "^7.6.0",
+    "@prisma/client": "^7.6.0",
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.8.0",
     "chart.js": "^4.5.1",
+    "country-code-lookup": "^0.1.5",
+    "d3-scale": "^4.0.2",
+    "dotenv": "^17.3.1",
     "groq-sdk": "^0.37.0",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-chartjs-2": "^5.3.1",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "react-simple-maps": "^3.0.0",
+    "world-atlas": "^2.0.2"
   },
   "devDependencies": {
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
-    "eslint-config-next": "16.1.6"
+    "eslint-config-next": "16.1.6",
+    "prisma": "^7.6.0"
   }
 }
