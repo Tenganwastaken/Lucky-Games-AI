@@ -18,6 +18,7 @@
     "better-sqlite3": "^12.8.0",
     "chart.js": "^4.5.1",
     "country-code-lookup": "^0.1.5",
+    "d3-geo": "^3.1.1",
     "d3-scale": "^4.0.2",
     "dotenv": "^17.3.1",
     "groq-sdk": "^0.37.0",
@@ -26,7 +27,7 @@
     "react": "19.2.3",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "19.2.3",
-    "react-simple-maps": "^3.0.0",
+    "topojson-client": "^3.1.0",
     "world-atlas": "^2.0.2"
   },
   "devDependencies": {

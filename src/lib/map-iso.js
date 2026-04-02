@@ -4,6 +4,7 @@ import lookup from 'country-code-lookup';
  * world-atlas / Natural Earth 110m countries: properties often only have `name`.
  * Feature `id` is ISO 3166-1 numeric (e.g. 840 → US).
  */
+/** ISO 3166-1 alpha-2 from a GeoJSON feature (from TopoJSON via topojson-client). */
 export function isoFromRsmGeography(geo) {
   if (!geo) return null;
   const p = geo.properties || {};

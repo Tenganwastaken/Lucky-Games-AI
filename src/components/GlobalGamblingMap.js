@@ -1,12 +1,15 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
+import { geoEqualEarth, geoPath } from 'd3-geo';
 import { scaleLinear, scaleSqrt } from 'd3-scale';
+import { feature } from 'topojson-client';
 import { GAME_LABELS, LAYER_LABELS, MOCK_STATS } from '@/data/mockCountryGamblingStats';
 import { isoFromRsmGeography as isoFromGeo } from '@/lib/map-iso';
 
 const ADVISOR_POLL_MS = 5000;
+const MAP_WIDTH = 980;
+const MAP_HEIGHT = 520;
 const NO_DATA_FILL = '#cbd5e1';
 
 /** Normalize API shape (object or legacy number). */
@@ -95,6 +98,7 @@ export default function GlobalGamblingMap() {
   const [toolPos, setToolPos] = useState({ x: 0, y: 0 });
   const [topology, setTopology] = useState(null);
   const [topologyError, setTopologyError] = useState(null);
+  const [hoveredIso, setHoveredIso] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -200,6 +204,23 @@ export default function GlobalGamblingMap() {
     },
     [gameType, layer, accountsByCountry, advisorByCountry, colorScale],
   );
+
+  const geographyFeatures = useMemo(() => {
+    if (!topology?.objects?.countries) return [];
+    try {
+      return feature(topology, topology.objects.countries).features;
+    } catch {
+      return [];
+    }
+  }, [topology]);
+
+  const pathGenerator = useMemo(() => {
+    const projection = geoEqualEarth()
+      .scale(168)
+      .center([0, 12])
+      .translate([MAP_WIDTH / 2, MAP_HEIGHT / 2]);
+    return geoPath(projection);
+  }, []);
 
   const onMove = useCallback((e) => {
     setToolPos({ x: e.clientX, y: e.clientY });
@@ -309,56 +330,51 @@ export default function GlobalGamblingMap() {
           <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>Loading map outlines…</div>
         )}
         {topology && (
-        <ComposableMap
-          projection="geoEqualEarth"
-          projectionConfig={{
-            scale: 168,
-            center: [0, 12],
-          }}
-          width={980}
-          height={520}
-          style={{ width: '100%', height: 'auto', maxWidth: '100%', display: 'block' }}
-        >
-            <Geographies geography={topology}>
-              {({ geographies }) =>
-                geographies.map((geo) => {
-                  const iso = isoFromGeo(geo);
-                  const isYou = iso && viewer?.countryCode && iso === viewer.countryCode;
-                  const hasAdvisor = layer === 'advisor' && advisorTotalRuns(advisorByCountry[iso]) != null;
-                  const fill = fillFor(iso);
-                  return (
-                    <Geography
-                      key={geo.rsmKey}
-                      geography={geo}
-                      fill={fill}
-                      stroke={isYou ? '#ca8a04' : hasAdvisor ? '#1e3a8a' : '#64748b'}
-                      strokeWidth={isYou ? 1.35 : hasAdvisor ? 0.65 : 0.4}
-                      style={{
-                        default: { outline: 'none' },
-                        hover: { outline: 'none', fill: iso ? '#2563eb' : fill },
-                        pressed: { outline: 'none' },
-                      }}
-                      onMouseEnter={() => {
-                        if (!iso) return;
-                        if (layer === 'advisor') {
-                          setHover({
-                            kind: 'advisor',
-                            iso,
-                            stats: advisorByCountry[iso],
-                            gameType,
-                          });
-                          return;
-                        }
-                        const v = valueForCountry(iso, gameType, layer, accountsByCountry, advisorByCountry);
-                        setHover({ kind: 'simple', iso, v });
-                      }}
-                      onMouseLeave={() => setHover(null)}
-                    />
-                  );
-                })
-              }
-            </Geographies>
-        </ComposableMap>
+          <svg
+            viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
+            role="img"
+            aria-label="World map"
+            style={{ width: '100%', height: 'auto', maxWidth: '100%', display: 'block' }}
+          >
+            {geographyFeatures.map((geo, idx) => {
+              const iso = isoFromGeo(geo);
+              const d = pathGenerator(geo);
+              if (!d) return null;
+              const isYou = iso && viewer?.countryCode && iso === viewer.countryCode;
+              const hasAdvisor = layer === 'advisor' && advisorTotalRuns(advisorByCountry[iso]) != null;
+              const baseFill = fillFor(iso);
+              const fill = iso && hoveredIso === iso ? '#2563eb' : baseFill;
+              return (
+                <path
+                  key={iso || `g-${idx}`}
+                  d={d}
+                  fill={fill}
+                  stroke={isYou ? '#ca8a04' : hasAdvisor ? '#1e3a8a' : '#64748b'}
+                  strokeWidth={isYou ? 1.35 : hasAdvisor ? 0.65 : 0.4}
+                  style={{ outline: 'none', cursor: iso ? 'pointer' : 'default' }}
+                  onMouseEnter={() => {
+                    setHoveredIso(iso || null);
+                    if (!iso) return;
+                    if (layer === 'advisor') {
+                      setHover({
+                        kind: 'advisor',
+                        iso,
+                        stats: advisorByCountry[iso],
+                        gameType,
+                      });
+                      return;
+                    }
+                    const v = valueForCountry(iso, gameType, layer, accountsByCountry, advisorByCountry);
+                    setHover({ kind: 'simple', iso, v });
+                  }}
+                  onMouseLeave={() => {
+                    setHoveredIso(null);
+                    setHover(null);
+                  }}
+                />
+              );
+            })}
+          </svg>
         )}
 
         {hover?.iso && (

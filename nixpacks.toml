@@ -1,4 +1,0 @@
-# Railway runs `npm ci` in Docker; .npmrc is not always applied the same way.
-# Force legacy peer resolution (react-simple-maps only declares React 16–18).
-[phases.install]
-cmds = ["npm ci --legacy-peer-deps"]
