@@ -36,11 +36,5 @@
   },
   "engines": {
     "node": ">=20.9.0"
-  },
-  "overrides": {
-    "react-simple-maps": {
-      "react": "$react",
-      "react-dom": "$react-dom"
-    }
   }
 }
