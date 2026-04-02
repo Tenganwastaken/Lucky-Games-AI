@@ -1,0 +1,4 @@
+# Set Railway → Settings → Root Directory to "lucky-games-ai" if the repo is the whole thesis folder.
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
