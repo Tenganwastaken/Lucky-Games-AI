@@ -302,5 +302,117 @@
       "lossChanceEstimate": 95,
       "expectedWeeklySpend": 5
     }
+  },
+  {
+    "timestamp": "2026-03-31T22:09:08.301Z",
+    "input": {
+      "gameType": "lottery",
+      "betSize": 5,
+      "frequencyPerWeek": 1,
+      "riskTolerance": "medium"
+    },
+    "output": {
+      "advice": "While playing the lottery once a week with an average bet of 5 units might seem manageable given your medium risk tolerance, it's important to remember that lotteries are games of chance with very low odds of winning. To maintain safe habits, consider setting a strict budget for your lottery spending and never bet more than you can comfortably afford to lose.",
+      "riskScore": 30,
+      "winChanceEstimate": 5,
+      "lossChanceEstimate": 95,
+      "expectedWeeklySpend": 5
+    }
+  },
+  {
+    "timestamp": "2026-03-31T22:09:26.429Z",
+    "input": {
+      "gameType": "slots",
+      "betSize": 5,
+      "frequencyPerWeek": 1,
+      "riskTolerance": "medium"
+    },
+    "output": {
+      "advice": "Given your medium risk tolerance and playing slots once a week with an average bet of 5, it's important to remember that slots are games of chance with no guaranteed outcomes. Ensure your gambling remains a form of entertainment by setting clear limits on both time and money spent, and never chase losses.",
+      "riskScore": 70,
+      "winChanceEstimate": 15,
+      "lossChanceEstimate": 85,
+      "expectedWeeklySpend": 5
+    }
+  },
+  {
+    "timestamp": "2026-03-31T22:10:02.201Z",
+    "input": {
+      "gameType": "lottery",
+      "betSize": 5,
+      "frequencyPerWeek": 1,
+      "riskTolerance": "medium"
+    },
+    "output": {
+      "advice": "Your lottery play is infrequent with a moderate bet size, which aligns with a medium risk tolerance. It's important to remember that lotteries are games of chance with very low odds of winning, so treat any spending as entertainment rather than an investment. Ensure your gambling budget remains within your means and doesn't impact your financial well-being.",
+      "riskScore": 30,
+      "winChanceEstimate": 5,
+      "lossChanceEstimate": 95,
+      "expectedWeeklySpend": 5
+    }
+  },
+  {
+    "timestamp": "2026-03-31T22:16:41.410Z",
+    "input": {
+      "gameType": "lottery",
+      "betSize": 5,
+      "frequencyPerWeek": 1,
+      "riskTolerance": "medium"
+    },
+    "output": {
+      "advice": "Given your medium risk tolerance and playing the lottery once a week with an average bet of 5, it's important to remember that lotteries are games of chance with very low odds of winning. Continue to gamble responsibly by only spending what you can comfortably afford to lose. If you ever feel your gambling is becoming a problem, seek support from a trusted friend, family member, or a professional organization.",
+      "riskScore": 30,
+      "winChanceEstimate": 5,
+      "lossChanceEstimate": 95,
+      "expectedWeeklySpend": 5
+    }
+  },
+  {
+    "timestamp": "2026-03-31T22:17:04.046Z",
+    "input": {
+      "gameType": "lottery",
+      "betSize": 5,
+      "frequencyPerWeek": 1,
+      "riskTolerance": "medium"
+    },
+    "output": {
+      "advice": "Your lottery play is infrequent with a moderate bet size, which aligns with your medium risk tolerance. Remember that lottery games are based on chance, and it's important to only spend what you can afford to lose to ensure responsible enjoyment.",
+      "riskScore": 30,
+      "winChanceEstimate": 5,
+      "lossChanceEstimate": 95,
+      "expectedWeeklySpend": 5
+    }
+  },
+  {
+    "timestamp": "2026-03-31T22:17:41.631Z",
+    "input": {
+      "gameType": "lottery",
+      "betSize": 5,
+      "frequencyPerWeek": 1,
+      "riskTolerance": "medium"
+    },
+    "output": {
+      "advice": "It's great you're enjoying the lottery, and your medium risk tolerance suggests you're aware of potential downsides. Remember that lotteries are games of chance with very low odds of winning, so it's important to view your bets as entertainment rather than an investment. Continue to bet responsibly and ensure it doesn't impact your financial well-being.",
+      "riskScore": 30,
+      "winChanceEstimate": 5,
+      "lossChanceEstimate": 95,
+      "expectedWeeklySpend": 5
+    }
+  },
+  {
+    "timestamp": "2026-03-31T22:27:20.926Z",
+    "input": {
+      "gameType": "lottery",
+      "betSize": 5,
+      "frequencyPerWeek": 1,
+      "riskTolerance": "medium"
+    },
+    "output": {
+      "advice": "It's good that your lottery play aligns with a medium risk tolerance. Remember that lotteries are games of chance with very low odds of winning, so it's important to view any money spent as entertainment rather than an investment. Continue to play responsibly and within your budget.",
+      "riskScore": 30,
+      "winChanceEstimate": 5,
+      "lossChanceEstimate": 95,
+      "expectedWeeklySpend": 5
+    }
   }
 ]

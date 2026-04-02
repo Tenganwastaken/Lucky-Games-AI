@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import { gameTypeLabel } from '@/lib/advisor-labels';
+import PrintSummaryButton from '@/components/PrintSummaryButton';
 import { Bar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -28,8 +30,14 @@ export default function AdvisorPage() {
   const [devCountryCode, setDevCountryCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
+  const [usageId, setUsageId] = useState(null);
   const [error, setError] = useState(null);
-  const [history, setHistory] = useState([]);
+  const [savedHistory, setSavedHistory] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  /** 'unauthorized' | 'failed' | null — empty list with no error means truly no rows */
+  const [historyError, setHistoryError] = useState(null);
+  const [historyErrorDetail, setHistoryErrorDetail] = useState('');
+  const [copyHint, setCopyHint] = useState('');
   const [chatMessages, setChatMessages] = useState([]);
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
@@ -55,6 +63,71 @@ export default function AdvisorPage() {
     };
   }, []);
 
+  useEffect(() => {
+    const onVis = () => {
+      if (document.visibilityState !== 'visible') return;
+      fetch('/api/auth/me', { credentials: 'include' })
+        .then((r) => r.json().catch(() => ({})))
+        .then((data) => setAuthUser(data.user ?? null))
+        .catch(() => {});
+    };
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, []);
+
+  const fetchSavedHistory = useCallback(async () => {
+    setHistoryLoading(true);
+    setHistoryError(null);
+    setHistoryErrorDetail('');
+    try {
+      const res = await fetch('/api/advisor/history', {
+        credentials: 'include',
+        cache: 'no-store',
+      });
+      if (res.status === 401 || res.status === 403) {
+        setSavedHistory([]);
+        setHistoryError('unauthorized');
+        return;
+      }
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => null);
+        const detail =
+          (errBody && (errBody.details || errBody.error || errBody.message)) || `HTTP ${res.status}`;
+        setSavedHistory([]);
+        setHistoryError('failed');
+        setHistoryErrorDetail(typeof detail === 'string' ? detail : 'Request failed');
+        return;
+      }
+      const data = await res.json().catch(() => null);
+      if (!data || !Array.isArray(data.items)) {
+        setSavedHistory([]);
+        setHistoryError('failed');
+        setHistoryErrorDetail('Invalid response from server');
+        return;
+      }
+      setSavedHistory(data.items);
+    } catch (e) {
+      setSavedHistory([]);
+      setHistoryError('failed');
+      setHistoryErrorDetail(
+        e instanceof TypeError && e.message === 'Failed to fetch'
+          ? 'Network error — is the dev server running? Check the URL (use the same host as when you signed in).'
+          : 'Could not reach the server.',
+      );
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (authUser) fetchSavedHistory();
+    else {
+      setSavedHistory([]);
+      setHistoryError(null);
+      setHistoryErrorDetail('');
+    }
+  }, [authUser, fetchSavedHistory]);
+
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
@@ -62,6 +135,38 @@ export default function AdvisorPage() {
       /* ignore */
     }
     setAuthUser(null);
+  };
+
+  const loadSavedAnalysis = (row) => {
+    setForm({
+      gameType: row.gameType,
+      betSize: row.betSize,
+      frequencyPerWeek: row.frequencyPerWeek,
+      riskTolerance: row.riskTolerance,
+    });
+    setResult({
+      advice: row.advice,
+      riskScore: row.riskScore,
+      winChanceEstimate: row.winChanceEstimate,
+      lossChanceEstimate: row.lossChanceEstimate,
+      expectedWeeklySpend: row.expectedWeeklySpend,
+    });
+    setUsageId(row.id);
+    setChatMessages([]);
+    setError(null);
+  };
+
+  const copySummaryLink = async () => {
+    if (!usageId || typeof window === 'undefined') return;
+    const url = `${window.location.origin}/advisor/share/${usageId}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopyHint('Link copied');
+      setTimeout(() => setCopyHint(''), 2500);
+    } catch {
+      setCopyHint('Could not copy');
+      setTimeout(() => setCopyHint(''), 2500);
+    }
   };
 
   const handleChange = (e) => {
@@ -77,6 +182,7 @@ export default function AdvisorPage() {
     setLoading(true);
     setError(null);
     setResult(null);
+    setUsageId(null);
 
     try {
       const payload = {
@@ -90,6 +196,7 @@ export default function AdvisorPage() {
 
       const res = await fetch('/api/analyze', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
@@ -105,16 +212,13 @@ export default function AdvisorPage() {
         return;
       }
 
-      setResult(data);
-      setHistory((prev) => [
-        ...prev,
-        {
-          timestamp: new Date().toISOString(),
-          input: { ...form },
-          output: data,
-        },
-      ]);
+      const { usageId: newUsageId, ...rest } = data;
+      setResult(rest);
+      const idStr =
+        newUsageId != null && String(newUsageId).trim() !== '' ? String(newUsageId) : null;
+      setUsageId(idStr);
       setChatMessages([]);
+      await fetchSavedHistory();
     } catch (err) {
       console.error(err);
       setError('Something went wrong. Please try again.');
@@ -196,6 +300,7 @@ export default function AdvisorPage() {
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userMessage.content,
@@ -399,6 +504,7 @@ export default function AdvisorPage() {
             gap: '1.75rem',
           }}
         >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <form
             onSubmit={handleSubmit}
             style={{
@@ -533,6 +639,147 @@ export default function AdvisorPage() {
         )}
       </form>
 
+          {authUser ? (
+            <div
+              style={{
+                padding: '1.25rem',
+                borderRadius: '1rem',
+                border: '1px solid #e2e8f0',
+                background: '#fff',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '0.5rem',
+                  marginBottom: '0.5rem',
+                }}
+              >
+                <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#0f172a', margin: 0 }}>
+                  Your advisor history
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => fetchSavedHistory()}
+                  disabled={historyLoading}
+                  style={{
+                    fontSize: '0.8rem',
+                    fontWeight: 600,
+                    padding: '0.35rem 0.75rem',
+                    borderRadius: '999px',
+                    border: '1px solid #cbd5e1',
+                    background: historyLoading ? '#f1f5f9' : '#fff',
+                    color: '#334155',
+                    cursor: historyLoading ? 'default' : 'pointer',
+                  }}
+                >
+                  {historyLoading ? 'Refreshing…' : 'Refresh'}
+                </button>
+              </div>
+              <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '0.75rem' }}>
+                Signed-in runs are saved when you click Analyze (session cookie is sent). Open a past result below or
+                use Summary for a printable page.
+              </p>
+              {historyError === 'unauthorized' && (
+                <p style={{ fontSize: '0.85rem', color: '#b45309', marginBottom: '0.5rem' }}>
+                  Could not load history (not signed in or session expired).{' '}
+                  <Link href="/login" style={{ fontWeight: 600, color: '#2563eb' }}>
+                    Sign in
+                  </Link>{' '}
+                  and refresh.
+                </p>
+              )}
+              {historyError === 'failed' && (
+                <div style={{ fontSize: '0.85rem', color: '#b45309', marginBottom: '0.5rem' }}>
+                  <p style={{ margin: '0 0 0.35rem' }}>
+                    History could not be loaded. Check your connection and tap <strong>Refresh</strong>.
+                  </p>
+                  {historyErrorDetail ? (
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: '0.8rem',
+                        color: '#92400e',
+                        fontFamily: 'ui-monospace, monospace',
+                        wordBreak: 'break-word',
+                      }}
+                    >
+                      {historyErrorDetail}
+                    </p>
+                  ) : null}
+                </div>
+              )}
+              {historyLoading ? (
+                <p style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Loading…</p>
+              ) : savedHistory.length === 0 && !historyError ? (
+                <p style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
+                  No saved runs for this account yet — click <strong>Analyze</strong> while signed in to add one.
+                  (Runs done before signing in are not linked to your account.)
+                </p>
+              ) : savedHistory.length === 0 ? null : (
+                <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '0.5rem', maxHeight: 280, overflowY: 'auto' }}>
+                  {savedHistory.map((row) => (
+                    <li
+                      key={row.id}
+                      style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        alignItems: 'center',
+                        gap: '0.5rem',
+                        padding: '0.5rem 0.65rem',
+                        borderRadius: '0.5rem',
+                        border: '1px solid #e2e8f0',
+                        background: '#f8fafc',
+                        fontSize: '0.85rem',
+                      }}
+                    >
+                      <span style={{ color: '#475569', flex: '1 1 140px' }}>
+                        {new Date(row.createdAt).toLocaleString()}
+                      </span>
+                      <span style={{ fontWeight: 600, color: '#1e293b' }}>{gameTypeLabel(row.gameType)}</span>
+                      <span style={{ color: '#64748b' }}>risk {row.riskScore}</span>
+                      <button
+                        type="button"
+                        onClick={() => loadSavedAnalysis(row)}
+                        style={{
+                          fontSize: '0.8rem',
+                          fontWeight: 600,
+                          color: '#2563eb',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          textDecoration: 'underline',
+                          padding: 0,
+                        }}
+                      >
+                        View
+                      </button>
+                      <Link
+                        href={`/advisor/share/${row.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ fontSize: '0.8rem', fontWeight: 600, color: '#7c3aed' }}
+                      >
+                        Summary ↗
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ) : (
+            <p style={{ fontSize: '0.85rem', color: '#64748b', padding: '0 0.25rem' }}>
+              <Link href="/login" style={{ color: '#2563eb', fontWeight: 600 }}>
+                Sign in
+              </Link>{' '}
+              to keep a history of your analyses and open a one-page printable summary for each run.
+            </p>
+          )}
+          </div>
+
       <section
         style={{
           padding: '1.5rem',
@@ -550,6 +797,77 @@ export default function AdvisorPage() {
               <p style={{ marginBottom: '1rem', color: '#1e293b' }}>
                 {result.advice}
               </p>
+            )}
+
+            {authUser && (
+              <div
+                style={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: '0.65rem',
+                  alignItems: 'center',
+                  marginBottom: '1rem',
+                  padding: '0.75rem 1rem',
+                  borderRadius: '0.75rem',
+                  background: '#eff6ff',
+                  border: '1px solid #bfdbfe',
+                }}
+              >
+                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#1e40af' }}>
+                  Export PDF / summary
+                </span>
+                {usageId ? (
+                  <>
+                    <Link
+                      href={`/advisor/share/${usageId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        padding: '0.45rem 0.9rem',
+                        borderRadius: '999px',
+                        background: 'linear-gradient(to right, #2563eb, #4f46e5)',
+                        color: 'white',
+                        fontWeight: 600,
+                        fontSize: '0.85rem',
+                        textDecoration: 'none',
+                      }}
+                    >
+                      Open summary (print → Save as PDF)
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={copySummaryLink}
+                      style={{
+                        padding: '0.45rem 0.9rem',
+                        borderRadius: '999px',
+                        border: '1px solid #64748b',
+                        background: 'white',
+                        fontWeight: 600,
+                        fontSize: '0.85rem',
+                        cursor: 'pointer',
+                        color: '#334155',
+                      }}
+                    >
+                      Copy summary link
+                    </button>
+                    {copyHint ? (
+                      <span style={{ fontSize: '0.8rem', color: '#15803d' }}>{copyHint}</span>
+                    ) : null}
+                    <span style={{ fontSize: '0.75rem', color: '#64748b', flex: '1 1 220px' }}>
+                      On the summary page use <strong>Print / Save as PDF</strong>. The link only works while you are
+                      signed in.
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#1e40af', flex: '1 1 240px' }}>
+                      This run was not stored (or the server could not save it). You can still print this screen, or
+                      try <strong>Analyze</strong> again after signing in.
+                    </p>
+                    <PrintSummaryButton label="Print this page → Save as PDF" />
+                  </>
+                )}
+              </div>
             )}
 
             <div

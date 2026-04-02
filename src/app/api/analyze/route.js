@@ -175,7 +175,8 @@ Return only plain text sentences, no JSON, no bullet points, no code fences.
       output: responsePayload,
     });
 
-    // Map aggregates: one row per successful advisor run (logged-in or guest)
+    // Map + history: one row per successful run (logged-in or guest)
+    let usageId = null;
     try {
       const cookieStore = await cookies();
       const token = cookieStore.get(SESSION_COOKIE)?.value;
@@ -199,7 +200,7 @@ Return only plain text sentences, no JSON, no bullet points, no code fences.
         }
       }
 
-      await prisma.advisorUsage.create({
+      const created = await prisma.advisorUsage.create({
         data: {
           userId,
           countryCode,
@@ -207,13 +208,19 @@ Return only plain text sentences, no JSON, no bullet points, no code fences.
           betSize: Math.round(betN),
           frequencyPerWeek: Math.round(freqN),
           riskTolerance,
+          advice: responsePayload.advice,
+          riskScore: responsePayload.riskScore,
+          winChanceEstimate: responsePayload.winChanceEstimate,
+          lossChanceEstimate: responsePayload.lossChanceEstimate,
+          expectedWeeklySpend: responsePayload.expectedWeeklySpend,
         },
       });
+      usageId = created.id;
     } catch (persistErr) {
       console.error('AdvisorUsage persist failed:', persistErr);
     }
 
-    return NextResponse.json(responsePayload);
+    return NextResponse.json({ ...responsePayload, usageId });
   } catch (err) {
     console.error('Error in /api/analyze:', err);
     return NextResponse.json(

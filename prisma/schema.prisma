@@ -26,19 +26,25 @@ model User {
 }
 
 model AdvisorUsage {
-  id               String   @id @default(cuid())
-  userId           String?
-  user             User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  countryCode      String? // snapshot: user profile or request IP geo at analysis time
-  gameType         String
-  betSize          Int
-  frequencyPerWeek Int
-  riskTolerance    String
-  createdAt        DateTime @default(now())
+  id                  String   @id @default(cuid())
+  userId              String?
+  user                User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  countryCode         String? // snapshot: user profile or request IP geo at analysis time
+  gameType            String
+  betSize             Int
+  frequencyPerWeek    Int
+  riskTolerance       String
+  advice              String   @default("")
+  riskScore           Int      @default(0)
+  winChanceEstimate   Int      @default(0)
+  lossChanceEstimate  Int      @default(0)
+  expectedWeeklySpend Float    @default(0)
+  createdAt           DateTime @default(now())
 
   @@index([countryCode])
   @@index([gameType])
   @@index([countryCode, gameType])
+  @@index([userId, createdAt])
 }
 
 model Session {
