@@ -10,7 +10,7 @@ import { isoFromRsmGeography as isoFromGeo } from '@/lib/map-iso';
 const ADVISOR_POLL_MS = 5000;
 const MAP_WIDTH = 980;
 const MAP_HEIGHT = 520;
-const NO_DATA_FILL = '#cbd5e1';
+const NO_DATA_FILL = '#e7e5e4';
 
 /** Normalize API shape (object or legacy number). */
 function advisorStats(entry) {
@@ -187,12 +187,12 @@ export default function GlobalGamblingMap() {
   const colorScale = useMemo(() => {
     if (layer === 'advisor') {
       const hi = Math.max(max, 5);
-      return scaleSqrt().domain([0, hi]).range(['#93c5fd', '#1e3a8a']).clamp(true);
+      return scaleSqrt().domain([0, hi]).range(['#e7e5e4', '#44403c']).clamp(true);
     }
     const pad = max > min ? (max - min) * 0.05 : 1;
     return scaleLinear()
       .domain([min - pad, max + pad])
-      .range(['#e2e8f0', '#1d4ed8'])
+      .range(['#f5f5f4', '#57534e'])
       .clamp(true);
   }, [layer, min, max]);
 
@@ -242,30 +242,15 @@ export default function GlobalGamblingMap() {
   };
 
   return (
-    <section
-      style={{
-        borderRadius: '1rem',
-        border: '1px solid #e2e8f0',
-        background: '#fff',
-        padding: '1.25rem',
-        overflow: 'hidden',
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '1rem',
-          alignItems: 'flex-end',
-          marginBottom: '1rem',
-        }}
-      >
-        <label style={{ display: 'grid', gap: '0.35rem', fontSize: '0.9rem' }}>
-          <span style={{ fontWeight: 600, color: '#334155' }}>Data layer</span>
+    <section className="map-panel map-panel--pad">
+      <div className="map-toolbar">
+        <label className="map-field">
+          <span className="map-field__label">Data layer</span>
           <select
             value={layer}
             onChange={(e) => setLayer(e.target.value)}
-            style={{ padding: '0.45rem 0.65rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1', minWidth: 260 }}
+            className="select-input"
+            style={{ minWidth: 260 }}
           >
             {Object.entries(LAYER_LABELS).map(([k, lab]) => (
               <option key={k} value={k}>
@@ -274,19 +259,14 @@ export default function GlobalGamblingMap() {
             ))}
           </select>
         </label>
-        <label style={{ display: 'grid', gap: '0.35rem', fontSize: '0.9rem' }}>
-          <span style={{ fontWeight: 600, color: '#334155' }}>Game filter</span>
+        <label className="map-field">
+          <span className="map-field__label">Game filter</span>
           <select
             value={gameType}
             onChange={(e) => setGameType(e.target.value)}
             disabled={gameFilterDisabled}
-            style={{
-              padding: '0.45rem 0.65rem',
-              borderRadius: '0.5rem',
-              border: '1px solid #cbd5e1',
-              minWidth: 200,
-              opacity: gameFilterDisabled ? 0.5 : 1,
-            }}
+            className="select-input"
+            style={{ minWidth: 200, opacity: gameFilterDisabled ? 0.5 : 1 }}
           >
             {Object.entries(GAME_LABELS).map(([k, lab]) => (
               <option key={k} value={k}>
@@ -295,39 +275,30 @@ export default function GlobalGamblingMap() {
             ))}
           </select>
         </label>
-        <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b', maxWidth: 340, lineHeight: 1.4 }}>
+        <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)', maxWidth: 340, lineHeight: 1.4 }}>
           {layerHint}
         </p>
       </div>
 
       {layer === 'advisor' && advisorMeta.updatedAt && (
-        <p style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '-0.5rem', marginBottom: '0.75rem' }}>
+        <p style={{ fontSize: '0.75rem', color: 'var(--text-faint)', marginTop: '-0.5rem', marginBottom: '0.75rem' }}>
           Last fetched: {new Date(advisorMeta.updatedAt).toLocaleTimeString()}
         </p>
       )}
 
       {viewer?.countryCode && (
-        <p style={{ fontSize: '0.85rem', color: '#475569', marginBottom: '0.75rem' }}>
+        <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>
           Your detected region: <strong>{viewer.countryName || viewer.countryCode}</strong> (
           {viewer.countryCode}) — highlighted on the map.
         </p>
       )}
 
-      <div
-        style={{
-          position: 'relative',
-          width: '100%',
-          borderRadius: '0.75rem',
-          background: '#e2e8f0',
-          border: '1px solid #94a3b8',
-        }}
-        onMouseMove={onMove}
-      >
+      <div className="map-svg-wrap" onMouseMove={onMove}>
         {topologyError && (
-          <div style={{ padding: '2rem', textAlign: 'center', color: '#b91c1c' }}>{topologyError}</div>
+          <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--danger)' }}>{topologyError}</div>
         )}
         {!topology && !topologyError && (
-          <div style={{ padding: '2rem', textAlign: 'center', color: '#64748b' }}>Loading map outlines…</div>
+          <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>Loading map outlines…</div>
         )}
         {topology && (
           <svg
@@ -343,13 +314,13 @@ export default function GlobalGamblingMap() {
               const isYou = iso && viewer?.countryCode && iso === viewer.countryCode;
               const hasAdvisor = layer === 'advisor' && advisorTotalRuns(advisorByCountry[iso]) != null;
               const baseFill = fillFor(iso);
-              const fill = iso && hoveredIso === iso ? '#2563eb' : baseFill;
+              const fill = iso && hoveredIso === iso ? '#292524' : baseFill;
               return (
                 <path
                   key={iso || `g-${idx}`}
                   d={d}
                   fill={fill}
-                  stroke={isYou ? '#ca8a04' : hasAdvisor ? '#1e3a8a' : '#64748b'}
+                  stroke={isYou ? '#a16207' : hasAdvisor ? '#44403c' : '#a8a29e'}
                   strokeWidth={isYou ? 1.35 : hasAdvisor ? 0.65 : 0.4}
                   style={{ outline: 'none', cursor: iso ? 'pointer' : 'default' }}
                   onMouseEnter={() => {
@@ -384,8 +355,8 @@ export default function GlobalGamblingMap() {
               left: Math.min(toolPos.x + 12, typeof window !== 'undefined' ? window.innerWidth - 280 : 0),
               top: Math.min(toolPos.y + 12, typeof window !== 'undefined' ? window.innerHeight - 140 : 0),
               padding: '0.55rem 0.85rem',
-              background: 'rgba(15,23,42,0.94)',
-              color: '#f8fafc',
+              background: 'rgba(28, 25, 23, 0.94)',
+              color: '#fafaf9',
               borderRadius: '0.5rem',
               fontSize: '0.8rem',
               pointerEvents: 'none',
@@ -425,30 +396,22 @@ export default function GlobalGamblingMap() {
         )}
       </div>
 
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '0.75rem',
-          marginTop: '0.85rem',
-          fontSize: '0.75rem',
-          color: '#64748b',
-        }}
-      >
-        <span
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.35rem',
-          }}
-        >
-          <span style={{ width: 48, height: 8, background: 'linear-gradient(90deg,#f1f5f9,#1d4ed8)', borderRadius: 4 }} />
+      <div className="map-legend">
+        <span className="map-legend__swatch">
+          <span
+            style={{
+              width: 48,
+              height: 8,
+              background: 'linear-gradient(90deg, #f5f5f4, #44403c)',
+              borderRadius: 4,
+            }}
+          />
           {layer === 'anonymous' ? 'Low → high %' : layer === 'advisor' ? 'Uses (sqrt scale)' : 'Low → high count'}
         </span>
         <span>
           {layer === 'advisor'
-            ? 'Darker blue = more uses; navy outline = at least one use on this filter.'
-            : 'Gold border = your IP region (when detectable).'}
+            ? 'Darker fill = more uses; darker outline = at least one use on this filter.'
+            : 'Amber outline = your IP region (when detectable).'}
         </span>
       </div>
     </section>

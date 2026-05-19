@@ -39,56 +39,22 @@ export default function LoginPage() {
   };
 
   return (
-    <main
-      style={{
-        minHeight: '100vh',
-        margin: 0,
-        padding: '2rem 1rem',
-        fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
-        background:
-          'radial-gradient(circle at top left, #1d4ed8 0, #0f172a 40%, #020617 100%)',
-        color: '#0b1120',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'flex-start',
-      }}
-    >
-      <div
-        style={{
-          width: '100%',
-          maxWidth: 440,
-          borderRadius: '1.5rem',
-          padding: '2rem',
-          background:
-            'linear-gradient(145deg, rgba(255,255,255,0.96), rgba(248,250,252,0.98))',
-          boxShadow:
-            '0 24px 60px rgba(15,23,42,0.35), 0 0 0 1px rgba(148,163,184,0.2)',
-        }}
-      >
+    <main className="app-shell app-shell--centered">
+      <div className="app-card app-card--narrow">
         <p style={{ marginBottom: '0.75rem' }}>
-          <Link
-            href="/"
-            style={{ color: '#2563eb', fontSize: '0.9rem', textDecoration: 'none' }}
-          >
-            ← Back to advisor
+          <Link href="/" className="app-link app-link--subtle">
+            ← Αρχική
           </Link>
         </p>
-        <h1
-          style={{
-            fontSize: '1.75rem',
-            marginBottom: '0.35rem',
-            color: '#0f172a',
-            letterSpacing: '-0.03em',
-          }}
-        >
-          Sign in
+        <h1 className="app-title" style={{ fontSize: '1.75rem' }}>
+          Σύνδεση
         </h1>
-        <p style={{ color: '#64748b', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-          Your session is stored in the database and survives server restarts.
+        <p className="app-subtitle" style={{ fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+          Η συνεδρία αποθηκεύεται στη βάση και επιβιώνει από επανεκκινήσεις διακομιστή.
         </p>
 
         <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1rem' }}>
-          <label style={{ display: 'grid', gap: '0.35rem', fontSize: '0.95rem' }}>
+          <label className="field">
             <span>Email</span>
             <input
               type="email"
@@ -96,51 +62,33 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              style={{ padding: '0.55rem 0.75rem', borderRadius: '0.5rem', border: '1px solid #d4d4d8' }}
+              className="input"
             />
           </label>
 
-          <label style={{ display: 'grid', gap: '0.35rem', fontSize: '0.95rem' }}>
-            <span>Password</span>
+          <label className="field">
+            <span>Κωδικός</span>
             <input
               type="password"
               autoComplete="current-password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              style={{ padding: '0.55rem 0.75rem', borderRadius: '0.5rem', border: '1px solid #d4d4d8' }}
+              className="input"
             />
           </label>
 
-          {error && (
-            <p style={{ color: '#dc2626', fontSize: '0.9rem', margin: 0 }}>{error}</p>
-          )}
+          {error && <p className="callout callout--danger" style={{ margin: 0 }}>{error}</p>}
 
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              marginTop: '0.25rem',
-              padding: '0.8rem 1.1rem',
-              borderRadius: '999px',
-              border: 'none',
-              background: loading
-                ? 'linear-gradient(to right, #9ca3af, #6b7280)'
-                : 'linear-gradient(to right, #2563eb, #4f46e5)',
-              color: 'white',
-              fontWeight: 600,
-              cursor: loading ? 'default' : 'pointer',
-              boxShadow: loading ? 'none' : '0 12px 24px rgba(37,99,235,0.35)',
-            }}
-          >
-            {loading ? 'Signing in…' : 'Sign in'}
+          <button type="submit" disabled={loading} className="btn btn-primary btn-pill" style={{ marginTop: '0.25rem' }}>
+            {loading ? 'Σύνδεση…' : 'Σύνδεση'}
           </button>
         </form>
 
-        <p style={{ marginTop: '1.25rem', fontSize: '0.9rem', color: '#64748b' }}>
-          No account?{' '}
-          <Link href="/register" style={{ color: '#2563eb', fontWeight: 600 }}>
-            Create one
+        <p style={{ marginTop: '1.25rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+          Δεν έχεις λογαριασμό;{' '}
+          <Link href="/register" className="app-link">
+            Δημιουργία λογαριασμού
           </Link>
         </p>
       </div>

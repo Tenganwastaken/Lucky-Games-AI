@@ -239,7 +239,7 @@ export default function AdvisorPage() {
             result.lossChanceEstimate ?? 0,
             result.riskScore ?? 0,
           ],
-          backgroundColor: ['#16a34a', '#dc2626', '#2563eb'],
+          backgroundColor: ['#57534e', '#78716c', '#292524'],
         },
       ],
     });
@@ -247,11 +247,16 @@ export default function AdvisorPage() {
   const chartOptions = {
     responsive: true,
     plugins: {
-      legend: { position: 'top' },
+      legend: { position: 'top', labels: { color: '#57534e' } },
       title: {
         display: true,
         text: 'Risk & Probabilities',
+        color: '#1c1917',
       },
+    },
+    scales: {
+      x: { ticks: { color: '#78716c' }, grid: { color: '#e7e5e4' } },
+      y: { ticks: { color: '#78716c' }, grid: { color: '#e7e5e4' } },
     },
   };
 
@@ -266,7 +271,7 @@ export default function AdvisorPage() {
             result.expectedWeeklySpend ?? 0,
             (result.expectedWeeklySpend ?? 0) * 4,
           ],
-          backgroundColor: ['#0ea5e9', '#6366f1'],
+          backgroundColor: ['#57534e', '#a8a29e'],
         },
       ],
     });
@@ -274,11 +279,16 @@ export default function AdvisorPage() {
   const spendChartOptions = {
     responsive: true,
     plugins: {
-      legend: { position: 'top' },
+      legend: { position: 'top', labels: { color: '#57534e' } },
       title: {
         display: true,
         text: 'Spending projection',
+        color: '#1c1917',
       },
+    },
+    scales: {
+      x: { ticks: { color: '#78716c' }, grid: { color: '#e7e5e4' } },
+      y: { ticks: { color: '#78716c' }, grid: { color: '#e7e5e4' } },
     },
   };
 
@@ -344,205 +354,70 @@ export default function AdvisorPage() {
   };
 
   return (
-    <main
-      style={{
-        minHeight: '100vh',
-        margin: 0,
-        padding: '2rem 1rem',
-        fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
-        background:
-          'radial-gradient(circle at top left, #1d4ed8 0, #0f172a 40%, #020617 100%)',
-        color: '#0b1120',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'flex-start',
-      }}
-    >
-      <div
-        style={{
-          width: '100%',
-          maxWidth: 1100,
-          borderRadius: '1.5rem',
-          padding: '2rem',
-          background:
-            'linear-gradient(145deg, rgba(255,255,255,0.96), rgba(248,250,252,0.98))',
-          boxShadow:
-            '0 24px 60px rgba(15,23,42,0.35), 0 0 0 1px rgba(148,163,184,0.2)',
-        }}
-      >
+    <main className="app-shell app-shell--centered">
+      <div className="app-card">
         <p style={{ marginBottom: '1rem' }}>
-          <Link
-            href="/"
-            style={{ color: '#2563eb', fontSize: '0.9rem', fontWeight: 600, textDecoration: 'none' }}
-          >
+          <Link href="/" className="app-link app-link--subtle">
             ← Lucky Games home
           </Link>
         </p>
-        <header
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            gap: '1.5rem',
-            flexWrap: 'wrap',
-            marginBottom: '1.75rem',
-          }}
-        >
+        <header className="app-header-row">
           <div>
-            <h1
-              style={{
-                fontSize: '2.1rem',
-                marginBottom: '0.25rem',
-                color: '#0f172a',
-                letterSpacing: '-0.03em',
-              }}
-            >
-              Risk advisor
-            </h1>
-            <p style={{ color: '#64748b', maxWidth: 520 }}>
+            <h1 className="app-title">Risk advisor</h1>
+            <p className="app-subtitle" style={{ maxWidth: 520 }}>
               Enter how you play and get an AI-assisted risk overview, spending projection,
               and follow-up advice.
             </p>
           </div>
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-end',
-              gap: '0.65rem',
-            }}
-          >
+          <div className="app-header-actions">
             {authLoading ? (
-              <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Checking session…</span>
+              <span style={{ fontSize: '0.85rem', color: 'var(--text-faint)' }}>Checking session…</span>
             ) : authUser ? (
-              <div
-                style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'flex-end',
-                  gap: '0.5rem',
-                }}
-              >
-                <span style={{ fontSize: '0.85rem', color: '#475569', textAlign: 'right' }}>
-                  Signed in as <strong style={{ color: '#0f172a' }}>{authUser.email}</strong>
+              <div className="app-header-actions--stack">
+                <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textAlign: 'right' }}>
+                  Signed in as <strong style={{ color: 'var(--text)' }}>{authUser.email}</strong>
                 </span>
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  style={{
-                    fontSize: '0.9rem',
-                    fontWeight: 600,
-                    color: '#b91c1c',
-                    background: 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: 0,
-                    textDecoration: 'underline',
-                  }}
-                >
+                <button type="button" onClick={handleLogout} className="app-nav__btn">
                   Log out
                 </button>
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.35rem' }}>
-                <Link
-                  href="/login"
-                  style={{
-                    fontSize: '0.9rem',
-                    fontWeight: 600,
-                    color: '#1d4ed8',
-                    textDecoration: 'none',
-                  }}
-                >
+              <div className="app-header-actions--stack" style={{ gap: '0.35rem' }}>
+                <Link href="/login" className="app-link">
                   Sign in →
                 </Link>
-                <Link
-                  href="/register"
-                  style={{
-                    fontSize: '0.9rem',
-                    fontWeight: 600,
-                    color: '#1d4ed8',
-                    textDecoration: 'none',
-                  }}
-                >
+                <Link href="/register" className="app-link">
                   Create account →
                 </Link>
               </div>
             )}
-            <div
-              style={{
-                padding: '0.75rem 1rem',
-                borderRadius: '999px',
-                background: 'rgba(37,99,235,0.06)',
-                border: '1px solid rgba(129,140,248,0.35)',
-                color: '#1d4ed8',
-                fontSize: '0.85rem',
-                fontWeight: 500,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              <span
-                style={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: '999px',
-                  background: '#22c55e',
-                  boxShadow: '0 0 0 4px rgba(34,197,94,0.25)',
-                }}
-              />
+            <div className="badge-soft">
+              <span className="badge-soft__dot" aria-hidden />
               AI-powered insights (Gemini free tier)
             </div>
           </div>
         </header>
 
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'minmax(0, 1.1fr) minmax(0, 1.4fr)',
-            gap: '1.75rem',
-          }}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <div className="advisor-layout">
+          <div className="advisor-stack">
           <form
             onSubmit={handleSubmit}
-            style={{
-              display: 'grid',
-              gap: '1rem',
-              padding: '1.5rem',
-              borderRadius: '1rem',
-              border: '1px solid #e2e8f0',
-              background: '#f8fafc',
-            }}
+            className="panel advisor-form"
           >
             <h2
-              style={{
-                fontSize: '1.1rem',
-                fontWeight: 600,
-                color: '#0f172a',
-                marginBottom: '0.25rem',
-              }}
+              className="app-section-title"
+              style={{ marginBottom: '0.25rem' }}
             >
               Your playing pattern
             </h2>
-            <p style={{ color: '#94a3b8', fontSize: '0.85rem', marginBottom: '0.5rem' }}>
+            <p style={{ color: 'var(--text-faint)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>
               Adjust the fields and click Analyze to update the charts and advice. Each run is saved for the
               live map on the home page (country from your account or IP; dev override below).
             </p>
             {IS_DEV && (
               <label
-                style={{
-                  display: 'grid',
-                  gap: '0.25rem',
-                  fontSize: '0.85rem',
-                  marginBottom: '0.75rem',
-                  padding: '0.6rem 0.75rem',
-                  borderRadius: '0.5rem',
-                  background: '#fffbeb',
-                  border: '1px solid #fcd34d',
-                  color: '#92400e',
-                }}
+                className="callout callout--warn"
+                style={{ display: 'grid', gap: '0.25rem', fontSize: '0.85rem', marginBottom: '0.75rem' }}
               >
                 <span>
                   Dev only — map country (ISO2, e.g. US, GR). Use to test multiple regions on localhost.
@@ -553,17 +428,18 @@ export default function AdvisorPage() {
                   placeholder="e.g. GR"
                   value={devCountryCode}
                   onChange={(e) => setDevCountryCode(e.target.value.toUpperCase())}
-                  style={{ padding: '0.4rem', borderRadius: '0.35rem', border: '1px solid #d97706', maxWidth: 120 }}
+                  className="input"
+                  style={{ maxWidth: 120 }}
                 />
               </label>
             )}
-        <label style={{ display: 'grid', gap: '0.25rem', fontSize: '0.95rem' }}>
+        <label className="field-inline">
           <span>Game type</span>
           <select
             name="gameType"
             value={form.gameType}
             onChange={handleChange}
-            style={{ padding: '0.5rem', borderRadius: '0.5rem', border: '1px solid #d4d4d8' }}
+            className="select-input"
           >
             <option value="lottery">Lottery</option>
             <option value="slots">Slots</option>
@@ -572,7 +448,7 @@ export default function AdvisorPage() {
           </select>
         </label>
 
-        <label style={{ display: 'grid', gap: '0.25rem', fontSize: '0.95rem' }}>
+        <label className="field-inline">
           <span>Average bet size</span>
           <input
             type="number"
@@ -580,11 +456,11 @@ export default function AdvisorPage() {
             min="1"
             value={form.betSize}
             onChange={handleChange}
-            style={{ padding: '0.5rem', borderRadius: '0.5rem', border: '1px solid #d4d4d8' }}
+            className="number-input"
           />
         </label>
 
-        <label style={{ display: 'grid', gap: '0.25rem', fontSize: '0.95rem' }}>
+        <label className="field-inline">
           <span>Plays per week</span>
           <input
             type="number"
@@ -592,17 +468,17 @@ export default function AdvisorPage() {
             min="1"
             value={form.frequencyPerWeek}
             onChange={handleChange}
-            style={{ padding: '0.5rem', borderRadius: '0.5rem', border: '1px solid #d4d4d8' }}
+            className="number-input"
           />
         </label>
 
-        <label style={{ display: 'grid', gap: '0.25rem', fontSize: '0.95rem' }}>
+        <label className="field-inline">
           <span>Risk tolerance</span>
           <select
             name="riskTolerance"
             value={form.riskTolerance}
             onChange={handleChange}
-            style={{ padding: '0.5rem', borderRadius: '0.5rem', border: '1px solid #d4d4d8' }}
+            className="select-input"
           >
             <option value="low">Low</option>
             <option value="medium">Medium</option>
@@ -613,41 +489,20 @@ export default function AdvisorPage() {
         <button
           type="submit"
           disabled={loading}
-          style={{
-            marginTop: '0.5rem',
-            padding: '0.8rem 1.1rem',
-            borderRadius: '999px',
-            border: 'none',
-            background: loading
-              ? 'linear-gradient(to right, #9ca3af, #6b7280)'
-              : 'linear-gradient(to right, #2563eb, #4f46e5)',
-            color: 'white',
-            fontWeight: 600,
-            cursor: loading ? 'default' : 'pointer',
-            boxShadow: loading
-              ? 'none'
-              : '0 12px 24px rgba(37,99,235,0.35)',
-            transition: 'transform 0.08s ease, box-shadow 0.08s ease',
-          }}
+          className="btn btn-primary btn-pill"
+          style={{ marginTop: '0.5rem' }}
         >
           {loading ? 'Analyzing…' : 'Analyze'}
         </button>
         {error && (
-          <p style={{ color: '#dc2626', marginTop: '0.75rem', fontSize: '0.9rem' }}>
+          <p className="callout callout--danger" style={{ marginTop: '0.75rem' }}>
             {error}
           </p>
         )}
       </form>
 
           {authUser ? (
-            <div
-              style={{
-                padding: '1.25rem',
-                borderRadius: '1rem',
-                border: '1px solid #e2e8f0',
-                background: '#fff',
-              }}
-            >
+            <div className="advisor-results">
               <div
                 style={{
                   display: 'flex',
@@ -658,42 +513,34 @@ export default function AdvisorPage() {
                   marginBottom: '0.5rem',
                 }}
               >
-                <h3 style={{ fontSize: '1rem', fontWeight: 600, color: '#0f172a', margin: 0 }}>
+                <h3 className="app-section-title" style={{ margin: 0 }}>
                   Your advisor history
                 </h3>
                 <button
                   type="button"
                   onClick={() => fetchSavedHistory()}
                   disabled={historyLoading}
-                  style={{
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    padding: '0.35rem 0.75rem',
-                    borderRadius: '999px',
-                    border: '1px solid #cbd5e1',
-                    background: historyLoading ? '#f1f5f9' : '#fff',
-                    color: '#334155',
-                    cursor: historyLoading ? 'default' : 'pointer',
-                  }}
+                  className="btn btn-secondary btn-pill"
+                  style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem' }}
                 >
                   {historyLoading ? 'Refreshing…' : 'Refresh'}
                 </button>
               </div>
-              <p style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '0.75rem' }}>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
                 Signed-in runs are saved when you click Analyze (session cookie is sent). Open a past result below or
                 use Summary for a printable page.
               </p>
               {historyError === 'unauthorized' && (
-                <p style={{ fontSize: '0.85rem', color: '#b45309', marginBottom: '0.5rem' }}>
+                <p className="callout callout--warn" style={{ marginBottom: '0.5rem', fontSize: '0.85rem' }}>
                   Could not load history (not signed in or session expired).{' '}
-                  <Link href="/login" style={{ fontWeight: 600, color: '#2563eb' }}>
+                  <Link href="/login" className="app-link">
                     Sign in
                   </Link>{' '}
                   and refresh.
                 </p>
               )}
               {historyError === 'failed' && (
-                <div style={{ fontSize: '0.85rem', color: '#b45309', marginBottom: '0.5rem' }}>
+                <div className="callout callout--warn" style={{ marginBottom: '0.5rem', fontSize: '0.85rem' }}>
                   <p style={{ margin: '0 0 0.35rem' }}>
                     History could not be loaded. Check your connection and tap <strong>Refresh</strong>.
                   </p>
@@ -702,8 +549,8 @@ export default function AdvisorPage() {
                       style={{
                         margin: 0,
                         fontSize: '0.8rem',
-                        color: '#92400e',
-                        fontFamily: 'ui-monospace, monospace',
+                        color: 'var(--warn-text)',
+                        fontFamily: 'var(--font-mono)',
                         wordBreak: 'break-word',
                       }}
                     >
@@ -713,9 +560,9 @@ export default function AdvisorPage() {
                 </div>
               )}
               {historyLoading ? (
-                <p style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Loading…</p>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-faint)' }}>Loading…</p>
               ) : savedHistory.length === 0 && !historyError ? (
-                <p style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-faint)' }}>
                   No saved runs for this account yet — click <strong>Analyze</strong> while signed in to add one.
                   (Runs done before signing in are not linked to your account.)
                 </p>
@@ -724,36 +571,18 @@ export default function AdvisorPage() {
                   {savedHistory.map((row) => (
                     <li
                       key={row.id}
-                      style={{
-                        display: 'flex',
-                        flexWrap: 'wrap',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        padding: '0.5rem 0.65rem',
-                        borderRadius: '0.5rem',
-                        border: '1px solid #e2e8f0',
-                        background: '#f8fafc',
-                        fontSize: '0.85rem',
-                      }}
+                      className="history-item"
                     >
-                      <span style={{ color: '#475569', flex: '1 1 140px' }}>
+                      <span style={{ color: 'var(--text-secondary)', flex: '1 1 140px' }}>
                         {new Date(row.createdAt).toLocaleString()}
                       </span>
-                      <span style={{ fontWeight: 600, color: '#1e293b' }}>{gameTypeLabel(row.gameType)}</span>
-                      <span style={{ color: '#64748b' }}>risk {row.riskScore}</span>
+                      <span style={{ fontWeight: 600, color: 'var(--text)' }}>{gameTypeLabel(row.gameType)}</span>
+                      <span style={{ color: 'var(--text-muted)' }}>risk {row.riskScore}</span>
                       <button
                         type="button"
                         onClick={() => loadSavedAnalysis(row)}
-                        style={{
-                          fontSize: '0.8rem',
-                          fontWeight: 600,
-                          color: '#2563eb',
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          textDecoration: 'underline',
-                          padding: 0,
-                        }}
+                        className="btn btn-ghost"
+                        style={{ fontSize: '0.8rem', padding: 0, textDecoration: 'underline' }}
                       >
                         View
                       </button>
@@ -761,7 +590,8 @@ export default function AdvisorPage() {
                         href={`/advisor/share/${row.id}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        style={{ fontSize: '0.8rem', fontWeight: 600, color: '#7c3aed' }}
+                        className="app-link"
+                        style={{ fontSize: '0.8rem' }}
                       >
                         Summary ↗
                       </Link>
@@ -771,8 +601,8 @@ export default function AdvisorPage() {
               )}
             </div>
           ) : (
-            <p style={{ fontSize: '0.85rem', color: '#64748b', padding: '0 0.25rem' }}>
-              <Link href="/login" style={{ color: '#2563eb', fontWeight: 600 }}>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', padding: '0 0.25rem' }}>
+              <Link href="/login" className="app-link">
                 Sign in
               </Link>{' '}
               to keep a history of your analyses and open a one-page printable summary for each run.
@@ -780,40 +610,21 @@ export default function AdvisorPage() {
           )}
           </div>
 
-      <section
-        style={{
-          padding: '1.5rem',
-          borderRadius: '1rem',
-          border: '1px solid #e2e8f0',
-          background: '#ffffff',
-        }}
-      >
+      <section className="advisor-results">
         {result ? (
           <>
-            <h2 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: '#0f172a' }}>
+            <h2 className="app-section-title" style={{ fontSize: '1.25rem' }}>
               Analysis & charts
             </h2>
             {result.advice && (
-              <p style={{ marginBottom: '1rem', color: '#1e293b' }}>
+              <p style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>
                 {result.advice}
               </p>
             )}
 
             {authUser && (
-              <div
-                style={{
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: '0.65rem',
-                  alignItems: 'center',
-                  marginBottom: '1rem',
-                  padding: '0.75rem 1rem',
-                  borderRadius: '0.75rem',
-                  background: '#eff6ff',
-                  border: '1px solid #bfdbfe',
-                }}
-              >
-                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#1e40af' }}>
+              <div className="export-strip">
+                <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text)' }}>
                   Export PDF / summary
                 </span>
                 {usageId ? (
@@ -822,45 +633,30 @@ export default function AdvisorPage() {
                       href={`/advisor/share/${usageId}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      style={{
-                        padding: '0.45rem 0.9rem',
-                        borderRadius: '999px',
-                        background: 'linear-gradient(to right, #2563eb, #4f46e5)',
-                        color: 'white',
-                        fontWeight: 600,
-                        fontSize: '0.85rem',
-                        textDecoration: 'none',
-                      }}
+                      className="btn btn-primary btn-pill"
+                      style={{ fontSize: '0.85rem', textDecoration: 'none' }}
                     >
                       Open summary (print → Save as PDF)
                     </Link>
                     <button
                       type="button"
                       onClick={copySummaryLink}
-                      style={{
-                        padding: '0.45rem 0.9rem',
-                        borderRadius: '999px',
-                        border: '1px solid #64748b',
-                        background: 'white',
-                        fontWeight: 600,
-                        fontSize: '0.85rem',
-                        cursor: 'pointer',
-                        color: '#334155',
-                      }}
+                      className="btn btn-secondary btn-pill"
+                      style={{ fontSize: '0.85rem' }}
                     >
                       Copy summary link
                     </button>
                     {copyHint ? (
-                      <span style={{ fontSize: '0.8rem', color: '#15803d' }}>{copyHint}</span>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--success-text)' }}>{copyHint}</span>
                     ) : null}
-                    <span style={{ fontSize: '0.75rem', color: '#64748b', flex: '1 1 220px' }}>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', flex: '1 1 220px' }}>
                       On the summary page use <strong>Print / Save as PDF</strong>. The link only works while you are
                       signed in.
                     </span>
                   </>
                 ) : (
                   <>
-                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#1e40af', flex: '1 1 240px' }}>
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)', flex: '1 1 240px' }}>
                       This run was not stored (or the server could not save it). You can still print this screen, or
                       try <strong>Analyze</strong> again after signing in.
                     </p>
@@ -892,31 +688,16 @@ export default function AdvisorPage() {
 
             {/* Simple chatbot section */}
             <section style={{ marginTop: '2rem' }}>
-              <h3
-                style={{
-                  fontSize: '1.1rem',
-                  marginBottom: '0.4rem',
-                  color: '#0f172a',
-                }}
-              >
+              <h3 className="app-section-title" style={{ fontSize: '1.1rem' }}>
                 Ask follow-up questions
               </h3>
-              <p style={{ color: '#64748b', marginBottom: '0.75rem', fontSize: '0.9rem' }}>
+              <p style={{ color: 'var(--text-muted)', marginBottom: '0.75rem', fontSize: '0.9rem' }}>
                 Ask about your risk, safer habits, limits, or how to interpret the numbers.
               </p>
 
-              <div
-                ref={chatContainerRef}
-                style={{
-                  padding: '0.85rem',
-                  borderRadius: '0.9rem',
-                  border: '1px solid #e5e7eb',
-                  background: '#f9fafb',
-                  marginBottom: '0.75rem',
-                }}
-              >
+              <div ref={chatContainerRef} className="advisor-chat-box">
                 {chatMessages.length === 0 && (
-                  <p style={{ color: '#9ca3af', fontStyle: 'italic', fontSize: '0.9rem' }}>
+                  <p style={{ color: 'var(--text-faint)', fontStyle: 'italic', fontSize: '0.9rem' }}>
                     No messages yet. Try asking “How can I make this less risky?” or
                     “Is my weekly spend too high?”.
                   </p>
@@ -924,24 +705,10 @@ export default function AdvisorPage() {
                 {chatMessages.map((msg, idx) => (
                   <div
                     key={idx}
-                    style={{
-                      marginBottom: '0.5rem',
-                      textAlign: msg.role === 'user' ? 'right' : 'left',
-                    }}
+                    className={`advisor-msg-row ${msg.role === 'user' ? 'advisor-msg-row--user' : ''}`}
                   >
                     <span
-                      style={{
-                        display: 'inline-block',
-                        padding: '0.5rem 0.75rem',
-                        borderRadius: '0.85rem',
-                        background:
-                          msg.role === 'user'
-                            ? 'linear-gradient(to right, #2563eb, #4f46e5)'
-                            : '#e5e7eb',
-                        color: msg.role === 'user' ? '#ffffff' : '#111827',
-                        maxWidth: '80%',
-                        fontSize: '0.9rem',
-                      }}
+                      className={`advisor-bubble ${msg.role === 'user' ? 'advisor-bubble--user' : 'advisor-bubble--assistant'}`}
                     >
                       {msg.content}
                     </span>
@@ -961,30 +728,13 @@ export default function AdvisorPage() {
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
                   placeholder="Ask a follow-up question..."
-                  style={{
-                    flex: 1,
-                    padding: '0.55rem 0.85rem',
-                    borderRadius: '999px',
-                    border: '1px solid #d4d4d8',
-                    fontSize: '0.95rem',
-                  }}
+                  className="input"
+                  style={{ flex: 1, borderRadius: '999px' }}
                 />
                 <button
                   type="submit"
                   disabled={chatLoading || !chatInput.trim()}
-                  style={{
-                    padding: '0.55rem 0.95rem',
-                    borderRadius: '999px',
-                    border: 'none',
-                    background: chatLoading
-                      ? '#9ca3af'
-                      : 'linear-gradient(to right, #16a34a, #22c55e)',
-                    color: 'white',
-                    fontWeight: 600,
-                    cursor: chatLoading ? 'default' : 'pointer',
-                    whiteSpace: 'nowrap',
-                    fontSize: '0.95rem',
-                  }}
+                  className="btn btn-primary btn-pill"
                 >
                   {chatLoading ? 'Sending…' : 'Send'}
                 </button>
@@ -992,22 +742,7 @@ export default function AdvisorPage() {
             </section>
           </>
         ) : (
-          <div
-            style={{
-              height: '100%',
-              minHeight: 260,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: '0.9rem',
-              border: '1px dashed #e2e8f0',
-              background: '#f8fafc',
-              color: '#94a3b8',
-              fontSize: '0.95rem',
-              textAlign: 'center',
-              padding: '1.5rem',
-            }}
-          >
+          <div className="advisor-empty">
             Run an analysis to see charts, risk score, and start chatting.
           </div>
         )}

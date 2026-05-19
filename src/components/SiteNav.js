@@ -30,61 +30,32 @@ export default function SiteNav() {
     setUser(null);
   };
 
-  const linkStyle = {
-    fontSize: '0.9rem',
-    fontWeight: 600,
-    color: '#1d4ed8',
-    textDecoration: 'none',
-  };
-
   return (
-    <nav
-      style={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        alignItems: 'center',
-        gap: '0.75rem 1.25rem',
-        marginBottom: '1.5rem',
-        paddingBottom: '1rem',
-        borderBottom: '1px solid #e2e8f0',
-      }}
-    >
-      <Link href="/" style={{ ...linkStyle, fontWeight: 700 }}>
+    <nav className="app-nav">
+      <Link href="/" className="app-nav__brand">
         Lucky Games
       </Link>
-      <Link href="/advisor" style={linkStyle}>
+      <Link href="/learn" className="app-nav__link">
+        Θεωρία
+      </Link>
+      <Link href="/advisor" className="app-nav__link">
         Risk advisor
       </Link>
       {loading ? (
-        <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>…</span>
+        <span className="app-nav__meta">…</span>
       ) : user ? (
         <>
-          <span style={{ fontSize: '0.85rem', color: '#475569' }}>
-            {user.email}
-          </span>
-          <button
-            type="button"
-            onClick={logout}
-            style={{
-              fontSize: '0.85rem',
-              fontWeight: 600,
-              color: '#b91c1c',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              textDecoration: 'underline',
-              padding: 0,
-            }}
-          >
+          <span className="app-nav__meta">{user.email}</span>
+          <button type="button" onClick={logout} className="app-nav__btn">
             Log out
           </button>
         </>
       ) : (
         <>
-          <Link href="/login" style={linkStyle}>
+          <Link href="/login" className="app-nav__link">
             Sign in
           </Link>
-          <Link href="/register" style={linkStyle}>
+          <Link href="/register" className="app-nav__link">
             Create account
           </Link>
         </>

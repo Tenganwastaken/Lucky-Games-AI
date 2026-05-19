@@ -13,13 +13,13 @@ const geistMono = Geist_Mono({
 
 export const metadata = {
   title: "Lucky Games",
-  description: "Global gambling insights and AI risk advisor",
+  description: "Educational hub on games of chance, world map, and AI-assisted risk demo.",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className={`app-body ${geistSans.variable} ${geistMono.variable}`}>
         {children}
       </body>
     </html>

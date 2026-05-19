@@ -34,50 +34,29 @@ export default async function AdvisorSharePage({ params }) {
           body { background: white !important; }
         }
       `}</style>
-      <main
-        style={{
-          minHeight: '100vh',
-          padding: '2rem 1rem',
-          fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
-          background: '#f1f5f9',
-          color: '#0f172a',
-        }}
-      >
+      <main className="app-shell">
         <div className="no-print" style={{ maxWidth: 720, margin: '0 auto 1.5rem' }}>
-          <Link
-            href="/advisor"
-            style={{ color: '#2563eb', fontWeight: 600, fontSize: '0.9rem', textDecoration: 'none' }}
-          >
+          <Link href="/advisor" className="app-link app-link--subtle">
             ← Back to advisor
           </Link>
         </div>
 
-        <article
-          style={{
-            maxWidth: 720,
-            margin: '0 auto',
-            background: 'white',
-            padding: '2rem',
-            borderRadius: '0.75rem',
-            boxShadow: '0 4px 24px rgba(15,23,42,0.08)',
-            border: '1px solid #e2e8f0',
-          }}
-        >
-          <header style={{ borderBottom: '1px solid #e2e8f0', paddingBottom: '1rem', marginBottom: '1.25rem' }}>
-            <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        <article className="app-card app-card--article">
+          <header style={{ borderBottom: '1px solid var(--border)', paddingBottom: '1rem', marginBottom: '1.25rem' }}>
+            <p className="app-eyebrow" style={{ marginBottom: '0.35rem' }}>
               Lucky Games — Risk advisor
             </p>
-            <h1 style={{ margin: '0.35rem 0 0', fontSize: '1.5rem', letterSpacing: '-0.02em' }}>
+            <h1 className="app-title" style={{ fontSize: '1.5rem' }}>
               Your analysis summary
             </h1>
-            <p style={{ margin: '0.5rem 0 0', fontSize: '0.9rem', color: '#64748b' }}>{when}</p>
+            <p style={{ margin: '0.5rem 0 0', fontSize: '0.9rem', color: 'var(--text-muted)' }}>{when}</p>
           </header>
 
           <section style={{ marginBottom: '1.25rem' }}>
-            <h2 style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#64748b', marginBottom: '0.5rem' }}>
+            <h2 className="app-eyebrow" style={{ marginBottom: '0.5rem' }}>
               Inputs
             </h2>
-            <table style={{ width: '100%', fontSize: '0.95rem', borderCollapse: 'collapse' }}>
+            <table className="share-table">
               <tbody>
                 {[
                   ['Game type', gameTypeLabel(row.gameType)],
@@ -85,9 +64,9 @@ export default async function AdvisorSharePage({ params }) {
                   ['Plays per week', String(row.frequencyPerWeek)],
                   ['Risk tolerance', riskToleranceLabel(row.riskTolerance)],
                 ].map(([k, v]) => (
-                  <tr key={k} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '0.4rem 0', color: '#64748b', width: '45%' }}>{k}</td>
-                    <td style={{ padding: '0.4rem 0', fontWeight: 500 }}>{v}</td>
+                  <tr key={k}>
+                    <td>{k}</td>
+                    <td style={{ fontWeight: 500 }}>{v}</td>
                   </tr>
                 ))}
               </tbody>
@@ -95,10 +74,10 @@ export default async function AdvisorSharePage({ params }) {
           </section>
 
           <section style={{ marginBottom: '1.25rem' }}>
-            <h2 style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#64748b', marginBottom: '0.5rem' }}>
+            <h2 className="app-eyebrow" style={{ marginBottom: '0.5rem' }}>
               Estimates (illustrative)
             </h2>
-            <ul style={{ margin: 0, paddingLeft: '1.1rem', lineHeight: 1.7 }}>
+            <ul style={{ margin: 0, paddingLeft: '1.1rem', lineHeight: 1.7, color: 'var(--text-secondary)' }}>
               <li>Risk score: <strong>{row.riskScore}</strong> / 100</li>
               <li>Win chance (model estimate): <strong>{row.winChanceEstimate}%</strong></li>
               <li>Loss chance (model estimate): <strong>{row.lossChanceEstimate}%</strong></li>
@@ -107,17 +86,17 @@ export default async function AdvisorSharePage({ params }) {
           </section>
 
           <section style={{ marginBottom: '1.5rem' }}>
-            <h2 style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#64748b', marginBottom: '0.5rem' }}>
+            <h2 className="app-eyebrow" style={{ marginBottom: '0.5rem' }}>
               AI advice
             </h2>
-            <p style={{ margin: 0, lineHeight: 1.65, whiteSpace: 'pre-wrap' }}>{row.advice || '—'}</p>
+            <p style={{ margin: 0, lineHeight: 1.65, whiteSpace: 'pre-wrap', color: 'var(--text-secondary)' }}>{row.advice || '—'}</p>
           </section>
 
           <footer
             style={{
               fontSize: '0.75rem',
-              color: '#94a3b8',
-              borderTop: '1px solid #e2e8f0',
+              color: 'var(--text-muted)',
+              borderTop: '1px solid var(--border)',
               paddingTop: '1rem',
               lineHeight: 1.5,
             }}
@@ -128,7 +107,7 @@ export default async function AdvisorSharePage({ params }) {
 
           <div className="no-print" style={{ marginTop: '1.5rem', display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
             <PrintSummaryButton />
-            <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b', flex: '1 1 200px', alignSelf: 'center' }}>
+            <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)', flex: '1 1 200px', alignSelf: 'center' }}>
               Use your browser&apos;s print dialog → choose &quot;Save as PDF&quot; to share a copy.
             </p>
           </div>
