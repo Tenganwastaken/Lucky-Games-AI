@@ -1,7 +1,5 @@
 // This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// learn more about it in the: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client"
@@ -13,23 +11,41 @@ datasource db {
 }
 
 model User {
-  id             String          @id @default(cuid())
-  email          String          @unique
-  passwordHash   String
-  dateOfBirth    DateTime
-  countryCode    String? // ISO 3166-1 alpha-2 from signup/login IP (approximate)
-  createdAt      DateTime        @default(now())
-  sessions       Session[]
-  advisorUsages  AdvisorUsage[]
+  id              String           @id @default(cuid())
+  email           String           @unique
+  passwordHash    String
+  dateOfBirth     DateTime
+  countryCode       String?
+  weeklyLossLimit   Float?
+  createdAt         DateTime         @default(now())
+  sessions        Session[]
+  /// @deprecated Legacy short-form runs — prefer RiskAssessment
+  advisorUsages   AdvisorUsage[]
+  riskAssessments RiskAssessment[]
+  pgsiResults     PgsiResult[]
 
   @@index([countryCode])
 }
 
+model PgsiResult {
+  id          String   @id @default(cuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  totalScore  Int
+  category    String
+  answersJson String
+  createdAt   DateTime @default(now())
+
+  @@index([userId, createdAt])
+  @@index([totalScore])
+}
+
+/// @deprecated Use RiskAssessment for expanded behavioural indicators. Kept for map/history backward compatibility.
 model AdvisorUsage {
   id                  String   @id @default(cuid())
   userId              String?
   user                User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  countryCode         String? // snapshot: user profile or request IP geo at analysis time
+  countryCode         String?
   gameType            String
   betSize             Int
   frequencyPerWeek    Int
@@ -45,6 +61,56 @@ model AdvisorUsage {
   @@index([gameType])
   @@index([countryCode, gameType])
   @@index([userId, createdAt])
+}
+
+model RiskAssessment {
+  id     String  @id @default(cuid())
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  countryCode String?
+
+  // Section 1 — demographics (optional)
+  ageRange String?
+  gender   String?
+
+  // Section 2 — game type & breadth
+  primaryGameType String
+  gameTypesCount  Int?
+
+  // Section 3 — frequency & time
+  daysPerMonth       Int
+  avgSessionMinutes  Int
+  nightPlayPercent   Int
+
+  // Section 4 — financial
+  avgWagerEuro      Float
+  weeklyTotalEuro   Float?
+  wagerVariability  String?
+
+  // Section 5 — deposits & chasing
+  depositsPerSession    Int?
+  chasingFrequency      String?
+  cancelWithdrawalCount String?
+
+  // Section 6 — control & awareness
+  limitsSet              String?
+  failedStopAttempts     String?
+  relationshipConflict   String?
+  riskAwareness          String?
+
+  // Outputs
+  advice              String @default("")
+  riskScore           Int    @default(0)
+  winChanceEstimate   Int    @default(0)
+  lossChanceEstimate  Int    @default(0)
+  expectedWeeklySpend Float  @default(0)
+  riskFactorsJson     String @default("[]")
+
+  createdAt DateTime @default(now())
+
+  @@index([countryCode])
+  @@index([userId, createdAt])
+  @@index([primaryGameType])
 }
 
 model Session {

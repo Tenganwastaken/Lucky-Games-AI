@@ -1,9 +1,93 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Link from 'next/link';
-import { gameTypeLabel } from '@/lib/advisor-labels';
+import { gameTypeLabel, primaryGameTypeLabel } from '@/lib/advisor-labels';
+import { DEFAULT_FORM_DATA } from '@/lib/risk-assessment-form';
+import AdvisorRiskForm from '@/components/advisor/AdvisorRiskForm';
+import RiskScorePanel from '@/components/advisor/RiskScorePanel';
 import PrintSummaryButton from '@/components/PrintSummaryButton';
+import LimitSettingDemo from '@/components/LimitSettingDemo';
+import Skeleton from '@/components/Skeleton';
+import AccessibleChart from '@/components/AccessibleChart';
+import EmptyState from '@/components/EmptyState';
+import AnalysisEmptyIllustration from '@/components/illustrations/AnalysisEmptyIllustration';
+import { useToast } from '@/components/Toast';
+import {
+  AI_INSIGHTS_GEMINI,
+  ANALYSIS_AND_CHARTS,
+  ANALYZE,
+  ANALYZING,
+  ASK_FOLLOW_UP,
+  ASK_FOLLOW_UP_HINT,
+  AVERAGE_BET_SIZE,
+  BACK_HOME_ADVISOR,
+  CHART_AMOUNT,
+  CHART_LOSS_CHANCE,
+  CHART_MONTHLY_SPEND,
+  CHART_PERCENT_SCORE,
+  CHART_RISK_PROBABILITIES,
+  CHART_WEEKLY_SPEND,
+  CHART_WIN_CHANCE,
+  CHAT_EMPTY,
+  CHAT_ERROR_PREFIX,
+  CHAT_PLACEHOLDER,
+  COPY_SUMMARY_LINK,
+  CREATE_ACCOUNT_ARROW,
+  DEV_MAP_COUNTRY,
+  DEV_MAP_PLACEHOLDER,
+  EXPORT_PDF_SUMMARY,
+  GAME_TYPE,
+  GAME_TYPE_LABELS,
+  GENERIC_ERROR,
+  HISTORY_EMPTY,
+  HISTORY_EMPTY_CTA,
+  HISTORY_FAILED,
+  HISTORY_HINT,
+  HISTORY_UNAUTHORIZED,
+  INVALID_SERVER_RESPONSE,
+  LINK_COPIED,
+  LINK_COPY_FAILED,
+  LOADING,
+  NETWORK_ERROR_HISTORY,
+  OPEN_SUMMARY_PRINT,
+  PLAYS_PER_WEEK,
+  PRINT_THIS_PAGE,
+  REFRESH,
+  REFRESHING,
+  RISK_ADVISOR_TITLE,
+  RISK_LABEL,
+  RISK_SCORE,
+  RISK_TOLERANCE,
+  RISK_TOLERANCE_LABELS,
+  RUN_ANALYSIS_EMPTY,
+  RUN_NOT_STORED,
+  TOAST_ANALYSIS_SUCCESS,
+  SEND,
+  SENDING,
+  SERVER_UNREACHABLE,
+  SIGN_IN_ARROW,
+  SIGN_IN_FOR_HISTORY,
+  SIGNED_IN_AS,
+  SPENDING_PROJECTION,
+  SUMMARY_LINK,
+  SUMMARY_PRINT_HINT,
+  VIEW,
+  YOUR_ADVISOR_HISTORY,
+  YOUR_PLAYING_PATTERN,
+  ADVISOR_DISCLAIMER,
+  ADVISOR_INTRO,
+  ADVISOR_PGSI_CTA,
+  BIASES_LINK,
+  LIMIT_CHART_LINE_LABEL,
+  NAV_SIGN_IN,
+  NAV_SIGN_OUT,
+  formatCurrency,
+  formatDateTime,
+} from '@/lib/strings';
+import { withBarEntryAnimation } from '@/lib/chart-animations';
+import { chartBaseOptions, getChartTheme, readCssVar } from '@/lib/theme';
+import { useTheme } from '@/lib/use-theme';
 import { Bar } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
@@ -15,17 +99,48 @@ import {
   Legend,
 } from 'chart.js';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+const weeklyLossLimitLinePlugin = {
+  id: 'weeklyLossLimitLine',
+  afterDatasetsDraw(chart) {
+    const limit = chart.options.plugins?.weeklyLossLimitLine?.limit;
+    if (limit == null || !Number.isFinite(limit)) return;
+    const { ctx, chartArea, scales } = chart;
+    const yScale = scales.y;
+    if (!yScale || !chartArea) return;
+    const y = yScale.getPixelForValue(limit);
+    if (y < chartArea.top || y > chartArea.bottom) return;
+    ctx.save();
+    ctx.strokeStyle = readCssVar('--error');
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6, 4]);
+    ctx.beginPath();
+    ctx.moveTo(chartArea.left, y);
+    ctx.lineTo(chartArea.right, y);
+    ctx.stroke();
+    ctx.fillStyle = readCssVar('--error');
+    ctx.font = '11px var(--font-sans), sans-serif';
+    ctx.fillText(`${LIMIT_CHART_LINE_LABEL}: ${formatCurrency(limit)}`, chartArea.left + 6, y - 6);
+    ctx.restore();
+  },
+};
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  weeklyLossLimitLinePlugin,
+);
 
 const IS_DEV = process.env.NODE_ENV === 'development';
 
 export default function AdvisorPage() {
-  const [form, setForm] = useState({
-    gameType: 'lottery',
-    betSize: 5,
-    frequencyPerWeek: 1,
-    riskTolerance: 'medium',
-  });
+  const themeKey = useTheme();
+  const toast = useToast();
+  const [formData, setFormData] = useState({ ...DEFAULT_FORM_DATA });
+  const [formKey, setFormKey] = useState(0);
   /** Dev-only: force ISO2 country on the map (localhost IP has no geo). Stripped in production builds. */
   const [devCountryCode, setDevCountryCode] = useState('');
   const [loading, setLoading] = useState(false);
@@ -44,6 +159,7 @@ export default function AdvisorPage() {
   const chatContainerRef = useRef(null);
   const [authUser, setAuthUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [weeklyLossLimit, setWeeklyLossLimit] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -95,29 +211,30 @@ export default function AdvisorPage() {
           (errBody && (errBody.details || errBody.error || errBody.message)) || `HTTP ${res.status}`;
         setSavedHistory([]);
         setHistoryError('failed');
-        setHistoryErrorDetail(typeof detail === 'string' ? detail : 'Request failed');
+        setHistoryErrorDetail(typeof detail === 'string' ? detail : INVALID_SERVER_RESPONSE);
         return;
       }
       const data = await res.json().catch(() => null);
       if (!data || !Array.isArray(data.items)) {
         setSavedHistory([]);
         setHistoryError('failed');
-        setHistoryErrorDetail('Invalid response from server');
+        setHistoryErrorDetail(INVALID_SERVER_RESPONSE);
         return;
       }
       setSavedHistory(data.items);
     } catch (e) {
       setSavedHistory([]);
       setHistoryError('failed');
-      setHistoryErrorDetail(
+      const detail =
         e instanceof TypeError && e.message === 'Failed to fetch'
-          ? 'Network error — is the dev server running? Check the URL (use the same host as when you signed in).'
-          : 'Could not reach the server.',
-      );
+          ? NETWORK_ERROR_HISTORY
+          : SERVER_UNREACHABLE;
+      setHistoryErrorDetail(detail);
+      toast.error(detail);
     } finally {
       setHistoryLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     if (authUser) fetchSavedHistory();
@@ -138,18 +255,41 @@ export default function AdvisorPage() {
   };
 
   const loadSavedAnalysis = (row) => {
-    setForm({
-      gameType: row.gameType,
-      betSize: row.betSize,
-      frequencyPerWeek: row.frequencyPerWeek,
-      riskTolerance: row.riskTolerance,
-    });
+    if (row.kind === 'risk' && row.formSnapshot) {
+      setFormData({
+        ...DEFAULT_FORM_DATA,
+        ...row.formSnapshot,
+        avgWagerEuro: row.formSnapshot.avgWagerEuro ?? '',
+        weeklyTotalEuro: row.formSnapshot.weeklyTotalEuro ?? '',
+      });
+    } else if (row.formSnapshot) {
+      setFormData({
+        ...DEFAULT_FORM_DATA,
+        primaryGameType: row.formSnapshot.gameType || 'lottery',
+        avgWagerEuro: row.formSnapshot.betSize ?? '',
+        daysPerMonth: Math.min(30, Math.round((row.formSnapshot.frequencyPerWeek || 1) * 4)),
+      });
+    }
+    setFormKey((k) => k + 1);
+    let riskAssessment = row.riskAssessment ?? null;
+    if (!riskAssessment && row.riskFactors?.length && row.riskFactors[0]?.contribution != null) {
+      riskAssessment = {
+        score: row.riskScore,
+        breakdown: row.riskFactors,
+        topDrivers: [],
+        recommendations: [],
+      };
+    }
     setResult({
       advice: row.advice,
       riskScore: row.riskScore,
+      riskTier: row.riskTier,
       winChanceEstimate: row.winChanceEstimate,
       lossChanceEstimate: row.lossChanceEstimate,
       expectedWeeklySpend: row.expectedWeeklySpend,
+      riskAssessment,
+      riskFactors: row.riskFactors ?? [],
+      input: row.formSnapshot,
     });
     setUsageId(row.id);
     setChatMessages([]);
@@ -161,40 +301,30 @@ export default function AdvisorPage() {
     const url = `${window.location.origin}/advisor/share/${usageId}`;
     try {
       await navigator.clipboard.writeText(url);
-      setCopyHint('Link copied');
+      setCopyHint(LINK_COPIED);
+      toast.success(LINK_COPIED);
       setTimeout(() => setCopyHint(''), 2500);
     } catch {
-      setCopyHint('Could not copy');
+      setCopyHint(LINK_COPY_FAILED);
+      toast.error(LINK_COPY_FAILED);
       setTimeout(() => setCopyHint(''), 2500);
     }
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleAnalyze = async (submittedForm) => {
     setLoading(true);
     setError(null);
     setResult(null);
     setUsageId(null);
+    setFormData(submittedForm);
 
     try {
-      const payload = {
-        ...form,
-        betSize: Number(form.betSize),
-        frequencyPerWeek: Number(form.frequencyPerWeek),
-      };
+      const payload = { ...submittedForm };
       if (IS_DEV && /^[a-zA-Z]{2}$/.test((devCountryCode || '').trim())) {
         payload.debugCountryCode = devCountryCode.trim().toUpperCase();
       }
 
-      const res = await fetch('/api/analyze', {
+      const res = await fetch('/api/advisor/analyze', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -205,92 +335,111 @@ export default function AdvisorPage() {
 
       if (!res.ok) {
         const message =
-          (data && (data.error || data.message)) ||
+          (data && (data.errors && Object.values(data.errors)[0]) ||
+            data?.error ||
+            data?.message) ||
           `Request failed with status ${res.status}`;
         console.error('API error:', message, 'details:', data);
         setError(message);
+        toast.error(message);
         return;
       }
 
-      const { usageId: newUsageId, ...rest } = data;
-      setResult(rest);
+      const { assessmentId, usageId: newUsageId, input, ...rest } = data;
+      setResult({ ...rest, input });
+      toast.success(TOAST_ANALYSIS_SUCCESS);
       const idStr =
-        newUsageId != null && String(newUsageId).trim() !== '' ? String(newUsageId) : null;
+        (assessmentId ?? newUsageId) != null && String(assessmentId ?? newUsageId).trim() !== ''
+          ? String(assessmentId ?? newUsageId)
+          : null;
       setUsageId(idStr);
       setChatMessages([]);
       await fetchSavedHistory();
     } catch (err) {
       console.error(err);
-      setError('Something went wrong. Please try again.');
+      setError(GENERIC_ERROR);
+      toast.error(GENERIC_ERROR);
     } finally {
       setLoading(false);
     }
   };
 
-  const chartData =
-    result &&
-    ({
-      labels: ['Win chance', 'Loss chance', 'Risk score'],
+  const handleValidationError = (validationErrors) => {
+    const first = Object.values(validationErrors).find(Boolean);
+    if (first) toast.error(first);
+  };
+
+  const chartData = useMemo(() => {
+    if (!result) return null;
+    const t = getChartTheme();
+    return {
+      labels: [CHART_WIN_CHANCE, CHART_LOSS_CHANCE, RISK_SCORE],
       datasets: [
         {
-          label: '% / score',
+          label: CHART_PERCENT_SCORE,
           data: [
             result.winChanceEstimate ?? 0,
             result.lossChanceEstimate ?? 0,
             result.riskScore ?? 0,
           ],
-          backgroundColor: ['#57534e', '#78716c', '#292524'],
+          backgroundColor: [t.bar1, t.bar2, t.bar3],
         },
       ],
-    });
+    };
+  }, [result, themeKey]);
 
-  const chartOptions = {
-    responsive: true,
-    plugins: {
-      legend: { position: 'top', labels: { color: '#57534e' } },
-      title: {
-        display: true,
-        text: 'Risk & Probabilities',
-        color: '#1c1917',
-      },
-    },
-    scales: {
-      x: { ticks: { color: '#78716c' }, grid: { color: '#e7e5e4' } },
-      y: { ticks: { color: '#78716c' }, grid: { color: '#e7e5e4' } },
-    },
-  };
+  const chartOptions = useMemo(() => {
+    const t = getChartTheme();
+    return withBarEntryAnimation(chartBaseOptions(t, CHART_RISK_PROBABILITIES));
+  }, [themeKey]);
 
-  const spendChartData =
-    result &&
-    ({
-      labels: ['Weekly spend', 'Monthly spend (approx)'],
+  const spendChartData = useMemo(() => {
+    if (!result) return null;
+    const t = getChartTheme();
+    return {
+      labels: [CHART_WEEKLY_SPEND, CHART_MONTHLY_SPEND],
       datasets: [
         {
-          label: 'Amount',
+          label: CHART_AMOUNT,
           data: [
             result.expectedWeeklySpend ?? 0,
             (result.expectedWeeklySpend ?? 0) * 4,
           ],
-          backgroundColor: ['#57534e', '#a8a29e'],
+          backgroundColor: [t.bar1, t.barMuted],
         },
       ],
-    });
+    };
+  }, [result, themeKey]);
 
-  const spendChartOptions = {
-    responsive: true,
-    plugins: {
-      legend: { position: 'top', labels: { color: '#57534e' } },
-      title: {
-        display: true,
-        text: 'Spending projection',
-        color: '#1c1917',
+  const spendChartOptions = useMemo(() => {
+    const t = getChartTheme();
+    const weekly = result?.expectedWeeklySpend ?? 0;
+    const monthly = weekly * 4;
+    const yMax =
+      weeklyLossLimit != null
+        ? Math.max(weekly, monthly, weeklyLossLimit) * 1.15
+        : undefined;
+    return withBarEntryAnimation({
+      ...chartBaseOptions(t, SPENDING_PROJECTION),
+      plugins: {
+        ...chartBaseOptions(t, SPENDING_PROJECTION).plugins,
+        weeklyLossLimitLine: {
+          limit: weeklyLossLimit ?? undefined,
+        },
       },
-    },
-    scales: {
-      x: { ticks: { color: '#78716c' }, grid: { color: '#e7e5e4' } },
-      y: { ticks: { color: '#78716c' }, grid: { color: '#e7e5e4' } },
-    },
-  };
+      scales: {
+        x: { ticks: { color: t.textMuted }, grid: { color: t.border } },
+        y: {
+          max: yMax,
+          ticks: {
+            color: t.textMuted,
+            callback: (value) => formatCurrency(value),
+          },
+          grid: { color: t.border },
+        },
+      },
+    });
+  }, [result, weeklyLossLimit, themeKey]);
 
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -316,7 +465,8 @@ export default function AdvisorPage() {
           message: userMessage.content,
           history: chatMessages,
           context: {
-            input: form,
+            formData: result.input ?? formData,
+            input: result.input ?? formData,
             analysis: result,
           },
         }),
@@ -331,7 +481,7 @@ export default function AdvisorPage() {
         console.error('Chat API error:', message, 'details:', data);
         setChatMessages((prev) => [
           ...prev,
-          { role: 'assistant', content: `Sorry, I had an error: ${message}` },
+          { role: 'assistant', content: `${CHAT_ERROR_PREFIX} ${message}` },
         ]);
         return;
       }
@@ -346,7 +496,7 @@ export default function AdvisorPage() {
       console.error(err);
       setChatMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: 'Something went wrong. Please try again.' },
+        { role: 'assistant', content: GENERIC_ERROR },
       ]);
     } finally {
       setChatLoading(false);
@@ -354,152 +504,87 @@ export default function AdvisorPage() {
   };
 
   return (
-    <main className="app-shell app-shell--centered">
+    <main id="main-content" className="app-shell app-shell--centered">
       <div className="app-card">
         <p style={{ marginBottom: '1rem' }}>
           <Link href="/" className="app-link app-link--subtle">
-            ← Lucky Games home
+            {BACK_HOME_ADVISOR}
           </Link>
         </p>
         <header className="app-header-row">
           <div>
-            <h1 className="app-title">Risk advisor</h1>
+            <h1 className="app-title">{RISK_ADVISOR_TITLE}</h1>
             <p className="app-subtitle" style={{ maxWidth: 520 }}>
-              Enter how you play and get an AI-assisted risk overview, spending projection,
-              and follow-up advice.
+              {ADVISOR_INTRO}
             </p>
           </div>
           <div className="app-header-actions">
             {authLoading ? (
-              <span style={{ fontSize: '0.85rem', color: 'var(--text-faint)' }}>Checking session…</span>
+              <Skeleton width={140} height={14} style={{ borderRadius: 999 }} />
             ) : authUser ? (
               <div className="app-header-actions--stack">
                 <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', textAlign: 'right' }}>
-                  Signed in as <strong style={{ color: 'var(--text)' }}>{authUser.email}</strong>
+                  {SIGNED_IN_AS} <strong style={{ color: 'var(--text)' }}>{authUser.email}</strong>
                 </span>
                 <button type="button" onClick={handleLogout} className="app-nav__btn">
-                  Log out
+                  {NAV_SIGN_OUT}
                 </button>
               </div>
             ) : (
               <div className="app-header-actions--stack" style={{ gap: '0.35rem' }}>
                 <Link href="/login" className="app-link">
-                  Sign in →
+                  {SIGN_IN_ARROW}
                 </Link>
                 <Link href="/register" className="app-link">
-                  Create account →
+                  {CREATE_ACCOUNT_ARROW}
                 </Link>
               </div>
             )}
             <div className="badge-soft">
               <span className="badge-soft__dot" aria-hidden />
-              AI-powered insights (Gemini free tier)
+              {AI_INSIGHTS_GEMINI}
             </div>
           </div>
         </header>
 
+        <div className="advisor-header-ctas">
+          <p className="advisor-pgsi-cta">
+            <Link href="/screener" className="advisor-pgsi-cta__link">
+              {ADVISOR_PGSI_CTA}
+            </Link>
+          </p>
+          <p className="advisor-pgsi-cta">
+            <Link href="/biases" className="advisor-pgsi-cta__link advisor-pgsi-cta__link--biases">
+              {BIASES_LINK}
+            </Link>
+          </p>
+        </div>
+
+        <p className="callout callout--warn advisor-disclaimer-banner" role="note">
+          {ADVISOR_DISCLAIMER}
+        </p>
+
         <div className="advisor-layout">
           <div className="advisor-stack">
-          <form
-            onSubmit={handleSubmit}
-            className="panel advisor-form"
-          >
-            <h2
-              className="app-section-title"
-              style={{ marginBottom: '0.25rem' }}
-            >
-              Your playing pattern
-            </h2>
-            <p style={{ color: 'var(--text-faint)', fontSize: '0.85rem', marginBottom: '0.5rem' }}>
-              Adjust the fields and click Analyze to update the charts and advice. Each run is saved for the
-              live map on the home page (country from your account or IP; dev override below).
-            </p>
-            {IS_DEV && (
-              <label
-                className="callout callout--warn"
-                style={{ display: 'grid', gap: '0.25rem', fontSize: '0.85rem', marginBottom: '0.75rem' }}
-              >
-                <span>
-                  Dev only — map country (ISO2, e.g. US, GR). Use to test multiple regions on localhost.
-                </span>
-                <input
-                  type="text"
-                  maxLength={2}
-                  placeholder="e.g. GR"
-                  value={devCountryCode}
-                  onChange={(e) => setDevCountryCode(e.target.value.toUpperCase())}
-                  className="input"
-                  style={{ maxWidth: 120 }}
-                />
-              </label>
-            )}
-        <label className="field-inline">
-          <span>Game type</span>
-          <select
-            name="gameType"
-            value={form.gameType}
-            onChange={handleChange}
-            className="select-input"
-          >
-            <option value="lottery">Lottery</option>
-            <option value="slots">Slots</option>
-            <option value="sports_bet">Sports bet</option>
-            <option value="other">Other</option>
-          </select>
-        </label>
 
-        <label className="field-inline">
-          <span>Average bet size</span>
-          <input
-            type="number"
-            name="betSize"
-            min="1"
-            value={form.betSize}
-            onChange={handleChange}
-            className="number-input"
+          <LimitSettingDemo
+            analysisResult={result}
+            onLimitChange={setWeeklyLossLimit}
           />
-        </label>
 
-        <label className="field-inline">
-          <span>Plays per week</span>
-          <input
-            type="number"
-            name="frequencyPerWeek"
-            min="1"
-            value={form.frequencyPerWeek}
-            onChange={handleChange}
-            className="number-input"
-          />
-        </label>
-
-        <label className="field-inline">
-          <span>Risk tolerance</span>
-          <select
-            name="riskTolerance"
-            value={form.riskTolerance}
-            onChange={handleChange}
-            className="select-input"
-          >
-            <option value="low">Low</option>
-            <option value="medium">Medium</option>
-            <option value="high">High</option>
-          </select>
-        </label>
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="btn btn-primary btn-pill"
-          style={{ marginTop: '0.5rem' }}
-        >
-          {loading ? 'Analyzing…' : 'Analyze'}
-        </button>
-        {error && (
-          <p className="callout callout--danger" style={{ marginTop: '0.75rem' }}>
-            {error}
-          </p>
-        )}
-      </form>
+          {authLoading ? (
+            <Skeleton variant="form" />
+          ) : (
+            <AdvisorRiskForm
+              key={formKey}
+              onSubmit={handleAnalyze}
+              loading={loading}
+              error={error}
+              devCountryCode={devCountryCode}
+              onDevCountryChange={setDevCountryCode}
+              onValidationError={handleValidationError}
+            />
+          )}
 
           {authUser ? (
             <div className="advisor-results">
@@ -513,9 +598,9 @@ export default function AdvisorPage() {
                   marginBottom: '0.5rem',
                 }}
               >
-                <h3 className="app-section-title" style={{ margin: 0 }}>
-                  Your advisor history
-                </h3>
+                <h2 className="app-section-title" style={{ margin: 0 }}>
+                  {YOUR_ADVISOR_HISTORY}
+                </h2>
                 <button
                   type="button"
                   onClick={() => fetchSavedHistory()}
@@ -523,26 +608,25 @@ export default function AdvisorPage() {
                   className="btn btn-secondary btn-pill"
                   style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem' }}
                 >
-                  {historyLoading ? 'Refreshing…' : 'Refresh'}
+                  {historyLoading ? REFRESHING : REFRESH}
                 </button>
               </div>
               <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
-                Signed-in runs are saved when you click Analyze (session cookie is sent). Open a past result below or
-                use Summary for a printable page.
+                {HISTORY_HINT}
               </p>
               {historyError === 'unauthorized' && (
                 <p className="callout callout--warn" style={{ marginBottom: '0.5rem', fontSize: '0.85rem' }}>
-                  Could not load history (not signed in or session expired).{' '}
+                  {HISTORY_UNAUTHORIZED}{' '}
                   <Link href="/login" className="app-link">
-                    Sign in
+                    {NAV_SIGN_IN}
                   </Link>{' '}
-                  and refresh.
+                  και ανανέωσε.
                 </p>
               )}
               {historyError === 'failed' && (
                 <div className="callout callout--warn" style={{ marginBottom: '0.5rem', fontSize: '0.85rem' }}>
                   <p style={{ margin: '0 0 0.35rem' }}>
-                    History could not be loaded. Check your connection and tap <strong>Refresh</strong>.
+                    {HISTORY_FAILED} <strong>{REFRESH}</strong>.
                   </p>
                   {historyErrorDetail ? (
                     <p
@@ -560,12 +644,17 @@ export default function AdvisorPage() {
                 </div>
               )}
               {historyLoading ? (
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-faint)' }}>Loading…</p>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-faint)' }}>{LOADING}</p>
               ) : savedHistory.length === 0 && !historyError ? (
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-faint)' }}>
-                  No saved runs for this account yet — click <strong>Analyze</strong> while signed in to add one.
-                  (Runs done before signing in are not linked to your account.)
-                </p>
+                <EmptyState
+                  className="history-empty"
+                  description={HISTORY_EMPTY}
+                  action={
+                    <Link href="/advisor" className="app-link">
+                      {HISTORY_EMPTY_CTA}
+                    </Link>
+                  }
+                />
               ) : savedHistory.length === 0 ? null : (
                 <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '0.5rem', maxHeight: 280, overflowY: 'auto' }}>
                   {savedHistory.map((row) => (
@@ -574,17 +663,23 @@ export default function AdvisorPage() {
                       className="history-item"
                     >
                       <span style={{ color: 'var(--text-secondary)', flex: '1 1 140px' }}>
-                        {new Date(row.createdAt).toLocaleString()}
+                        {formatDateTime(row.createdAt)}
                       </span>
-                      <span style={{ fontWeight: 600, color: 'var(--text)' }}>{gameTypeLabel(row.gameType)}</span>
-                      <span style={{ color: 'var(--text-muted)' }}>risk {row.riskScore}</span>
+                      <span style={{ fontWeight: 600, color: 'var(--text)' }}>
+                        {row.primaryGameType
+                          ? primaryGameTypeLabel(row.primaryGameType)
+                          : gameTypeLabel(row.gameType)}
+                      </span>
+                      <span style={{ color: 'var(--text-muted)' }}>
+                        {RISK_LABEL} {row.riskScore}
+                      </span>
                       <button
                         type="button"
                         onClick={() => loadSavedAnalysis(row)}
                         className="btn btn-ghost"
                         style={{ fontSize: '0.8rem', padding: 0, textDecoration: 'underline' }}
                       >
-                        View
+                        {VIEW}
                       </button>
                       <Link
                         href={`/advisor/share/${row.id}`}
@@ -593,7 +688,7 @@ export default function AdvisorPage() {
                         className="app-link"
                         style={{ fontSize: '0.8rem' }}
                       >
-                        Summary ↗
+                        {SUMMARY_LINK}
                       </Link>
                     </li>
                   ))}
@@ -603,18 +698,24 @@ export default function AdvisorPage() {
           ) : (
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', padding: '0 0.25rem' }}>
               <Link href="/login" className="app-link">
-                Sign in
+                {NAV_SIGN_IN}
               </Link>{' '}
-              to keep a history of your analyses and open a one-page printable summary for each run.
+              {SIGN_IN_FOR_HISTORY}
             </p>
           )}
           </div>
 
-      <section className="advisor-results">
-        {result ? (
+      <section className="advisor-results" aria-live="polite">
+        {loading ? (
+          <div role="status" aria-live="polite" aria-busy="true">
+            <Skeleton width="45%" height={22} style={{ marginBottom: '1rem' }} />
+            <Skeleton variant="chart-bar" />
+            <Skeleton variant="chart-bar" />
+          </div>
+        ) : result ? (
           <>
             <h2 className="app-section-title" style={{ fontSize: '1.25rem' }}>
-              Analysis & charts
+              {ANALYSIS_AND_CHARTS}
             </h2>
             {result.advice && (
               <p style={{ marginBottom: '1rem', color: 'var(--text-secondary)' }}>
@@ -622,10 +723,12 @@ export default function AdvisorPage() {
               </p>
             )}
 
+            {result.riskAssessment && <RiskScorePanel riskAssessment={result.riskAssessment} />}
+
             {authUser && (
               <div className="export-strip">
                 <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text)' }}>
-                  Export PDF / summary
+                  {EXPORT_PDF_SUMMARY}
                 </span>
                 {usageId ? (
                   <>
@@ -636,7 +739,7 @@ export default function AdvisorPage() {
                       className="btn btn-primary btn-pill"
                       style={{ fontSize: '0.85rem', textDecoration: 'none' }}
                     >
-                      Open summary (print → Save as PDF)
+                      {OPEN_SUMMARY_PRINT}
                     </Link>
                     <button
                       type="button"
@@ -644,23 +747,21 @@ export default function AdvisorPage() {
                       className="btn btn-secondary btn-pill"
                       style={{ fontSize: '0.85rem' }}
                     >
-                      Copy summary link
+                      {COPY_SUMMARY_LINK}
                     </button>
                     {copyHint ? (
                       <span style={{ fontSize: '0.8rem', color: 'var(--success-text)' }}>{copyHint}</span>
                     ) : null}
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', flex: '1 1 220px' }}>
-                      On the summary page use <strong>Print / Save as PDF</strong>. The link only works while you are
-                      signed in.
+                      {SUMMARY_PRINT_HINT}
                     </span>
                   </>
                 ) : (
                   <>
                     <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)', flex: '1 1 240px' }}>
-                      This run was not stored (or the server could not save it). You can still print this screen, or
-                      try <strong>Analyze</strong> again after signing in.
+                      {RUN_NOT_STORED}
                     </p>
-                    <PrintSummaryButton label="Print this page → Save as PDF" />
+                    <PrintSummaryButton label={PRINT_THIS_PAGE} />
                   </>
                 )}
               </div>
@@ -674,32 +775,42 @@ export default function AdvisorPage() {
               }}
             >
               {chartData && (
-                <div style={{ height: 260 }}>
+                <AccessibleChart
+                  title={CHART_RISK_PROBABILITIES}
+                  chartData={chartData}
+                  valueSuffix="%"
+                >
                   <Bar data={chartData} options={chartOptions} />
-                </div>
+                </AccessibleChart>
               )}
 
               {typeof result.expectedWeeklySpend === 'number' && spendChartData && (
-                <div style={{ height: 260 }}>
+                <AccessibleChart title={SPENDING_PROJECTION} chartData={spendChartData} valueSuffix=" €">
                   <Bar data={spendChartData} options={spendChartOptions} />
-                </div>
+                </AccessibleChart>
               )}
             </div>
 
             {/* Simple chatbot section */}
             <section style={{ marginTop: '2rem' }}>
               <h3 className="app-section-title" style={{ fontSize: '1.1rem' }}>
-                Ask follow-up questions
+                {ASK_FOLLOW_UP}
               </h3>
               <p style={{ color: 'var(--text-muted)', marginBottom: '0.75rem', fontSize: '0.9rem' }}>
-                Ask about your risk, safer habits, limits, or how to interpret the numbers.
+                {ASK_FOLLOW_UP_HINT}
               </p>
 
-              <div ref={chatContainerRef} className="advisor-chat-box">
+              <div
+                ref={chatContainerRef}
+                className="advisor-chat-box"
+                role="log"
+                aria-live="polite"
+                aria-relevant="additions"
+                aria-label="Συνομιλία με σύμβουλο"
+              >
                 {chatMessages.length === 0 && (
                   <p style={{ color: 'var(--text-faint)', fontStyle: 'italic', fontSize: '0.9rem' }}>
-                    No messages yet. Try asking “How can I make this less risky?” or
-                    “Is my weekly spend too high?”.
+                    {CHAT_EMPTY}
                   </p>
                 )}
                 {chatMessages.map((msg, idx) => (
@@ -727,7 +838,7 @@ export default function AdvisorPage() {
                   type="text"
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="Ask a follow-up question..."
+                  placeholder={CHAT_PLACEHOLDER}
                   className="input"
                   style={{ flex: 1, borderRadius: '999px' }}
                 />
@@ -736,14 +847,17 @@ export default function AdvisorPage() {
                   disabled={chatLoading || !chatInput.trim()}
                   className="btn btn-primary btn-pill"
                 >
-                  {chatLoading ? 'Sending…' : 'Send'}
+                  {chatLoading ? SENDING : SEND}
                 </button>
               </form>
             </section>
           </>
         ) : (
           <div className="advisor-empty">
-            Run an analysis to see charts, risk score, and start chatting.
+            <EmptyState
+              illustration={<AnalysisEmptyIllustration />}
+              description={RUN_ANALYSIS_EMPTY}
+            />
           </div>
         )}
       </section>

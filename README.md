@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Lucky Games AI
 
-## Getting Started
+Εκπαιδευτικό web εργαλείο αξιολόγησης κινδύνου στα ψηφιακά τυχερά παιχνίδια, βασισμένο σε ένα διαφανές rule-based μοντέλο που έχει ως θεμέλιο τη σύγχρονη επιστημονική βιβλιογραφία.
 
-First, run the development server:
+> ⚠️ **Προσοχή:** Πρόκειται για εκπαιδευτικό demo και όχι για κλινικό εργαλείο. Δεν αποτελεί διάγνωση. Για βοήθεια σχετικά με τον τζόγο: ΚΕΘΕΑ-ΑΛΦΑ (210 9215776, https://www.kethea.gr).
+
+## Ακαδημαϊκό πλαίσιο
+
+Η εφαρμογή αποτελεί το εφαρμοσμένο μέρος της πτυχιακής εργασίας με τίτλο _«Ανάλυση Κινδύνου Εθισμού στα Ψηφιακά Τυχερά Παιχνίδια με Χρήση Python Analytics»_. Η μεθοδολογία αξιολόγησης ακολουθεί τους συμπεριφορικούς δείκτες που εντοπίζονται στη διεθνή βιβλιογραφία (Auer et al., 2024· Tani et al., 2024· Hopfgartner et al., 2025) και έχει ως μεθοδολογική επιλογή το rule-based μοντέλο για λόγους ερμηνευσιμότητας και συμμόρφωσης με το άρθρο 22 του GDPR.
+
+## Χαρακτηριστικά
+
+- 🌍 **Παγκόσμιος χάρτης:** Διάδοση τυχερών παιχνιδιών ανά χώρα με ρυθμιστικά πλαίσια.
+- 🎯 **Αξιολόγηση κινδύνου:** Πολυπαραγοντική φόρμα με δείκτες τεκμηριωμένους στη βιβλιογραφία (chasing, deposit velocity, night-time play κ.λπ.).
+- 🤖 **AI advisor:** Εξατομικευμένη ανατροφοδότηση με χρήση LLM (Groq SDK).
+- 📊 **PGSI-9 screener:** Σύντομη ψυχομετρικά εγκυροποιημένη κλίμακα.
+- 🧠 **Διαδραστική επίδειξη γνωστικών στρεβλώσεων:** Gambler's Fallacy, near-miss, illusion of control.
+
+## Τεχνολογική στοίβα
+
+- **Frontend:** Next.js 16 (App Router), React 19
+- **Database:** Prisma 7 + SQLite (better-sqlite3 adapter)
+- **Auth:** bcryptjs (custom session-based)
+- **LLM:** groq-sdk
+- **Γραφήματα:** chart.js, react-chartjs-2
+- **Χάρτης:** d3-geo, topojson-client, world-atlas
+
+## Setup
 
 ```bash
+npm install
+cp .env.example .env   # συμπλήρωσε τα κλειδιά
+npx prisma migrate dev
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Άνοιξε [http://localhost:3000](http://localhost:3000) στον browser.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+## Δομή φακέλων
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/app/        Next.js App Router σελίδες & API routes
+src/components/ Reusable UI components
+src/lib/        Βοηθητικές βιβλιοθήκες (rule engine, helpers)
+prisma/         Schema & migrations
+data/           Στατικά δεδομένα χωρών
+scripts/        Utility scripts
+```
 
-## Learn More
+## Βιβλιογραφία (επιλεγμένη)
 
-To learn more about Next.js, take a look at the following resources:
+- Auer, M., Hopfgartner, N., & Griffiths, M. D. (2024). Machine-learning approaches in identifying problem gambling using behavioural tracking data. _Journal of Behavioral Addictions_.
+- Auer, M., & Griffiths, M. D. (2015). Testing normative and self-appraisal feedback in an online slot-machine pop-up. _Frontiers in Psychology_, 6, 339.
+- Blaszczynski, A., Ladouceur, R., & Shaffer, H. J. (2004). A science-based framework for responsible gambling: The Reno Model. _Journal of Gambling Studies_, 20(3), 301–317.
+- Ferris, J., & Wynne, H. (2001). _The Canadian Problem Gambling Index: Final Report_.
+- Hopfgartner, N., Auer, M., et al. (2025). Detecting problematic gambling behavior using machine learning. _arXiv preprint_.
+- Tani, F., et al. (2024). Behavioral profiling of online gamblers using shapelets. _Computers in Human Behavior_.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Άδεια
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Εκπαιδευτική χρήση. Για άλλη χρήση επικοινωνία με τον συγγραφέα.

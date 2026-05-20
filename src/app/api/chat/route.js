@@ -1,107 +1,157 @@
 import { NextResponse } from 'next/server';
+import Groq from 'groq-sdk';
+import {
+  ADVISOR_SYSTEM_PROMPT,
+  CRISIS_RESPONSE,
+  WIN_STRATEGY_REFUSAL,
+  buildAdvisorContextBlock,
+  buildUserTurn,
+  detectCrisisMessage,
+  detectWinStrategyRequest,
+} from '@/lib/advisor-chat';
 
 export const runtime = 'nodejs';
 
-const GEMINI_API_URL =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent';
+const GROQ_MODEL = process.env.ADVISOR_GROQ_MODEL || 'llama-3.3-70b-versatile';
+const GEMINI_MODEL = process.env.ADVISOR_GEMINI_MODEL || 'gemini-2.0-flash';
+const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
+const TEMPERATURE = 0.4;
+const MAX_OUTPUT_TOKENS = 768;
+
+function stripFences(text) {
+  return String(text || '')
+    .replace(/```[a-zA-Z]*/g, '')
+    .replace(/```/g, '')
+    .trim();
+}
+
+async function callGroq(apiKey, history, contextBlock, message) {
+  const groq = new Groq({ apiKey });
+  const messages = [
+    {
+      role: 'system',
+      content: `${ADVISOR_SYSTEM_PROMPT}\n\n${contextBlock}`,
+    },
+    ...history.map((m) => ({
+      role: m.role === 'assistant' ? 'assistant' : 'user',
+      content: m.content,
+    })),
+    { role: 'user', content: message },
+  ];
+
+  const completion = await groq.chat.completions.create({
+    model: GROQ_MODEL,
+    messages,
+    temperature: TEMPERATURE,
+    max_tokens: MAX_OUTPUT_TOKENS,
+  });
+
+  return stripFences(completion.choices?.[0]?.message?.content);
+}
+
+async function callGemini(apiKey, userTurn) {
+  const url = `${GEMINI_API_BASE}/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
+  const geminiRes = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: ADVISOR_SYSTEM_PROMPT }] },
+      contents: [
+        {
+          role: 'user',
+          parts: [{ text: userTurn }],
+        },
+      ],
+      generationConfig: {
+        temperature: TEMPERATURE,
+        maxOutputTokens: MAX_OUTPUT_TOKENS,
+      },
+    }),
+  });
+
+  if (!geminiRes.ok) {
+    const errText = await geminiRes.text();
+    throw new Error(`Gemini API error ${geminiRes.status}: ${errText}`);
+  }
+
+  const geminiData = await geminiRes.json();
+  return stripFences(geminiData.candidates?.[0]?.content?.parts?.[0]?.text);
+}
 
 export async function POST(req) {
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      console.error('Missing GEMINI_API_KEY');
-      return NextResponse.json(
-        { error: 'Server is not configured with GEMINI_API_KEY' },
-        { status: 500 }
-      );
-    }
-
     const body = await req.json();
     const { message, history = [], context } = body;
 
     if (!message || typeof message !== 'string') {
-      return NextResponse.json(
-        { error: 'Message is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Message is required' }, { status: 400 });
     }
 
-    const { input, analysis } = context || {};
+    const trimmed = message.trim();
+    if (!trimmed) {
+      return NextResponse.json({ error: 'Message is required' }, { status: 400 });
+    }
 
-    const systemPrompt = `You are an analytical, friendly assistant giving gambling safety advice.
-For each answer:
-1) Briefly restate what the user is asking.
-2) Analyze their situation step by step (mention game type, bet size, frequency, and risk tolerance).
-3) Explain the main risks clearly.
-4) Finish with 2–3 concrete, practical suggestions to reduce risk (limits, budgets, breaks, avoiding chasing losses).
-Keep answers focused and under about 6–8 sentences.
-Do not mention that you are an AI or talk about tokens or APIs.
-Avoid giving specific betting tips; focus on risk, probabilities and safe behavior.`;
+    if (detectCrisisMessage(trimmed)) {
+      return NextResponse.json({ reply: CRISIS_RESPONSE, safety: 'crisis' });
+    }
 
-    const contextSummary = input && analysis
-      ? `
-Previous input:
-- Game type: ${input.gameType}
-- Average bet size: ${input.betSize}
-- Plays per week: ${input.frequencyPerWeek}
-- Risk tolerance: ${input.riskTolerance}
+    if (detectWinStrategyRequest(trimmed)) {
+      return NextResponse.json({ reply: WIN_STRATEGY_REFUSAL, safety: 'win_strategy_refusal' });
+    }
 
-Previous analysis:
-- Advice: ${analysis.advice}
-- Risk score: ${analysis.riskScore}
-- Win chance estimate: ${analysis.winChanceEstimate}
-- Loss chance estimate: ${analysis.lossChanceEstimate}
-- Expected weekly spend: ${analysis.expectedWeeklySpend}
-`
-      : '';
+    const { input, analysis, formData } = context || {};
+    const formPayload = formData ?? input ?? analysis?.input ?? null;
+    const contextBlock = buildAdvisorContextBlock(formPayload, analysis);
 
-    const historyText = history
-      .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
-      .join('\n');
-
-    const userPrompt = `${contextSummary}
-Conversation so far:
-${historyText}
-
-User: ${message}
-
-Reply briefly and clearly.`;
-
-    const geminiRes = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              { text: systemPrompt },
-              { text: userPrompt },
-            ],
-          },
-        ],
-        generationConfig: {
-          temperature: 0.4,
-          maxOutputTokens: 512,
+    if (!contextBlock.trim()) {
+      return NextResponse.json(
+        {
+          error:
+            'Δεν υπάρχουν δεδομένα αξιολόγησης. Ολοκλήρωσε πρώτα την ανάλυση στη φόρμα.',
         },
-      }),
-    });
-
-    if (!geminiRes.ok) {
-      const errText = await geminiRes.text();
-      console.error('Gemini chat API error', geminiRes.status, errText);
-      return NextResponse.json(
-        { error: 'Gemini chat API error', status: geminiRes.status },
-        { status: 500 }
+        { status: 400 },
       );
     }
 
-    const geminiData = await geminiRes.json();
-    let reply =
-      geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const userTurn = buildUserTurn(history, trimmed, contextBlock);
 
-    reply = reply.replace(/```[a-zA-Z]*/g, '').replace(/```/g, '').trim();
+    const groqKey = process.env.GROQ_API_KEY;
+    const geminiKey = process.env.GEMINI_API_KEY;
 
-    return NextResponse.json({ reply });
+    let reply = '';
+    let provider = null;
+
+    if (groqKey) {
+      try {
+        reply = await callGroq(groqKey, history, contextBlock, trimmed);
+        provider = 'groq';
+      } catch (groqErr) {
+        console.error('Groq chat failed, falling back to Gemini:', groqErr);
+        if (!geminiKey) throw groqErr;
+      }
+    }
+
+    if (!reply && geminiKey) {
+      reply = await callGemini(geminiKey, userTurn);
+      provider = 'gemini';
+    }
+
+    if (!groqKey && !geminiKey) {
+      return NextResponse.json(
+        { error: 'Server is not configured with GROQ_API_KEY or GEMINI_API_KEY' },
+        { status: 500 },
+      );
+    }
+
+    if (!reply) {
+      return NextResponse.json(
+        { error: 'Empty response from language model' },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({ reply, provider });
   } catch (err) {
     console.error('Error in /api/chat:', err);
     return NextResponse.json(
@@ -109,7 +159,7 @@ Reply briefly and clearly.`;
         error: 'Failed to chat',
         message: err?.message || 'Unknown error',
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

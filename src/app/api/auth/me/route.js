@@ -11,7 +11,11 @@ export async function GET() {
       return NextResponse.json({ user: null });
     }
     return NextResponse.json({
-      user: { id: data.user.id, email: data.user.email },
+      user: {
+        id: data.user.id,
+        email: data.user.email,
+        weeklyLossLimit: data.user.weeklyLossLimit ?? null,
+      },
     });
   } catch (err) {
     console.error('me error', err);

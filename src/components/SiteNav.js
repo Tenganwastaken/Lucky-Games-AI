@@ -2,8 +2,19 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import {
+  BRAND_NAME,
+  NAV_CREATE_ACCOUNT,
+  NAV_LOADING,
+  NAV_RISK_ADVISOR,
+  NAV_SIGN_IN,
+  NAV_SIGN_OUT,
+} from '@/lib/strings';
 
-export default function SiteNav() {
+/**
+ * @param {{ className?: string }} props
+ */
+export default function SiteNav({ className = '' }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -31,32 +42,29 @@ export default function SiteNav() {
   };
 
   return (
-    <nav className="app-nav">
+    <nav className={`app-nav${className ? ` ${className}` : ''}`} aria-label="Κύρια πλοήγηση">
       <Link href="/" className="app-nav__brand">
-        Lucky Games
-      </Link>
-      <Link href="/learn" className="app-nav__link">
-        Θεωρία
+        {BRAND_NAME}
       </Link>
       <Link href="/advisor" className="app-nav__link">
-        Risk advisor
+        {NAV_RISK_ADVISOR}
       </Link>
       {loading ? (
-        <span className="app-nav__meta">…</span>
+        <span className="app-nav__meta">{NAV_LOADING}</span>
       ) : user ? (
         <>
           <span className="app-nav__meta">{user.email}</span>
           <button type="button" onClick={logout} className="app-nav__btn">
-            Log out
+            {NAV_SIGN_OUT}
           </button>
         </>
       ) : (
         <>
           <Link href="/login" className="app-nav__link">
-            Sign in
+            {NAV_SIGN_IN}
           </Link>
           <Link href="/register" className="app-nav__link">
-            Create account
+            {NAV_CREATE_ACCOUNT}
           </Link>
         </>
       )}

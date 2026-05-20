@@ -3,6 +3,19 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/components/Toast';
+import {
+  BACK_HOME,
+  EMAIL,
+  GENERIC_ERROR,
+  LOGIN_SUBMIT,
+  LOGIN_SUBMITTING,
+  LOGIN_SUBTITLE,
+  LOGIN_TITLE,
+  NO_ACCOUNT,
+  PASSWORD,
+  NAV_CREATE_ACCOUNT,
+} from '@/lib/strings';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -25,37 +38,40 @@ export default function LoginPage() {
       const data = await res.json().catch(() => null);
 
       if (!res.ok) {
-        setError((data && data.error) || `Request failed (${res.status})`);
+        const msg = (data && data.error) || `Request failed (${res.status})`;
+        setError(msg);
+        toast.error(msg);
         return;
       }
 
       router.push('/');
       router.refresh();
     } catch {
-      setError('Something went wrong. Please try again.');
+      setError(GENERIC_ERROR);
+      toast.error(GENERIC_ERROR);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <main className="app-shell app-shell--centered">
+    <main id="main-content" className="app-shell app-shell--centered">
       <div className="app-card app-card--narrow">
         <p style={{ marginBottom: '0.75rem' }}>
           <Link href="/" className="app-link app-link--subtle">
-            ← Αρχική
+            {BACK_HOME}
           </Link>
         </p>
         <h1 className="app-title" style={{ fontSize: '1.75rem' }}>
-          Σύνδεση
+          {LOGIN_TITLE}
         </h1>
         <p className="app-subtitle" style={{ fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-          Η συνεδρία αποθηκεύεται στη βάση και επιβιώνει από επανεκκινήσεις διακομιστή.
+          {LOGIN_SUBTITLE}
         </p>
 
         <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1rem' }}>
           <label className="field">
-            <span>Email</span>
+            <span>{EMAIL}</span>
             <input
               type="email"
               autoComplete="email"
@@ -67,7 +83,7 @@ export default function LoginPage() {
           </label>
 
           <label className="field">
-            <span>Κωδικός</span>
+            <span>{PASSWORD}</span>
             <input
               type="password"
               autoComplete="current-password"
@@ -78,17 +94,21 @@ export default function LoginPage() {
             />
           </label>
 
-          {error && <p className="callout callout--danger" style={{ margin: 0 }}>{error}</p>}
+          {error ? (
+            <p className="callout callout--danger" style={{ margin: 0 }} role="alert" aria-live="assertive">
+              {error}
+            </p>
+          ) : null}
 
           <button type="submit" disabled={loading} className="btn btn-primary btn-pill" style={{ marginTop: '0.25rem' }}>
-            {loading ? 'Σύνδεση…' : 'Σύνδεση'}
+            {loading ? LOGIN_SUBMITTING : LOGIN_SUBMIT}
           </button>
         </form>
 
         <p style={{ marginTop: '1.25rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-          Δεν έχεις λογαριασμό;{' '}
+          {NO_ACCOUNT}{' '}
           <Link href="/register" className="app-link">
-            Δημιουργία λογαριασμού
+            {NAV_CREATE_ACCOUNT}
           </Link>
         </p>
       </div>
